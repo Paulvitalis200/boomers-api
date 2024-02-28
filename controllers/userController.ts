@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import asyncHandler from "express-async-handler";
 import User from "../models/userModel";
+import * as EmailValidator from "email-validator";
 
 //@desc Register a user
 //@route POST /api/users/register
@@ -17,7 +18,18 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
     throw new Error("Please put a password");
   }
   const userSearchValue = email ? email : phoneNumber;
-  const userAvailable = await User.findOne({ userSearchValue });
+
+  if (email) {
+    const isValid = EmailValidator.validate(email);
+
+    if (!isValid) {
+      res.status(400);
+      throw new Error("Email is not valid");
+    }
+  }
+  const userAvailable = await User.findOne({
+    $or: [{ email: userSearchValue }, { phoneNumber: userSearchValue }],
+  });
 
   if (userAvailable) {
     res.status(400);
@@ -26,13 +38,24 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
 
   const hashPassword = await bcrypt.hash(password, 10);
 
-  const user = await User.create({
-    password: hashPassword,
-    email,
-    phoneNumber,
-  });
+  let user;
+  if (email) {
+    user = await User.create({
+      password: hashPassword,
+      email,
+    });
+  } else {
+    user = await User.create({
+      password: hashPassword,
+      phoneNumber,
+    });
+  }
+
   if (user) {
-    res.status(201).json({ _id: user.id, email: user.email });
+    res.status(201).json({
+      successful: true,
+      statusCode: parseInt("00"),
+    });
   } else {
     res.status(400);
     throw new Error("User data is not valid.");

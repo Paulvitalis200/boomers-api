@@ -18,6 +18,7 @@ const userSchema = new Schema<IUser>(
     phoneNumber: {
       type: String,
       required: false,
+      unique: true,
     },
     password: {
       type: String,
