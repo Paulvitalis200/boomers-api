@@ -6,6 +6,7 @@ interface IUser {
   password: string;
   firstName: string;
   lastName: string;
+  isVerified: boolean;
 }
 
 const userSchema = new Schema<IUser>(
@@ -13,12 +14,10 @@ const userSchema = new Schema<IUser>(
     email: {
       type: String,
       required: false,
-      unique: true,
     },
     phoneNumber: {
       type: String,
       required: false,
-      unique: true,
     },
     password: {
       type: String,
@@ -31,6 +30,10 @@ const userSchema = new Schema<IUser>(
     lastName: {
       type: String,
       required: false,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
     },
   },
   {
