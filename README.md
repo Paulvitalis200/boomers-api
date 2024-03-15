@@ -16,8 +16,12 @@ SETTING UP PROJECT
     NODE_ENV=local
 ```
 
-6. Run the application using npm run dev
+6. Run the application using `npm run dev`
 
 RUNNING TESTS
 We use jest for running our tests. To run our tests, run the following command
 `npm run test`
+
+# API DOCUMENTATION
+
+The Applications API documentation has been done using SwaggerDocs. To access the documentation, run the application and access the endpoint `/api/docs`
