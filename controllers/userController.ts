@@ -16,11 +16,10 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
       res.status(400);
       throw new Error("Please put an email or phone number");
     }
-    if (!password) {
+    if (!password.trim()) {
       res.status(400);
       throw new Error("Please put a password");
     }
-    const userSearchValue = email ? email : phoneNumber;
 
     if (email) {
       const isValid = EmailValidator.validate(email);
@@ -37,7 +36,18 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
       throw new Error("User already registered!");
     }
 
-    const hashPassword = await bcrypt.hash(password, 10);
+    const regexPattern =
+      /^(?=.*[-\#\$\.\%\&\@\!\+\=\<\>\*])(?=.*[a-zA-Z])(?=.*\d).{8,}$/;
+
+    if (!password.trim().match(regexPattern)) {
+      res.status(400).json({
+        error:
+          "Password must be 8-15 characters, have at least one alphabet (uppercase or lowercase), have at least one number present and have at least one special character (-,.,@,$,!,%,+,=,<,>,#,?,&)",
+      });
+      return;
+    }
+
+    const hashPassword = await bcrypt.hash(password.trim(), 10);
 
     const user = await User.create({
       password: hashPassword,
