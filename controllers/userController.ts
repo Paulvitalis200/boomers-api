@@ -32,7 +32,7 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
     const userAvailable = await User.findOne({ email });
 
     if (userAvailable) {
-      res.status(400);
+      res.status(409);
       throw new Error("User already registered!");
     }
 
@@ -80,7 +80,7 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
 //access public
 export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
   try {
-    const { email, code } = req.body;
+    const { email, verificationCode } = req.body;
 
     const hashedPassword = await UserCode.find({ email: { $in: [email] } });
 
@@ -88,7 +88,10 @@ export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
       res.status(400).json({ error: "User does not exist." });
       return;
     }
-    const isCorrect = await bcrypt.compare(code, hashedPassword[0].code);
+    const isCorrect = await bcrypt.compare(
+      verificationCode,
+      hashedPassword[0].code
+    );
     const createdDate: any = hashedPassword[0]._id.getTimestamp();
     const currentDate: any = new Date();
     const diffTime = Math.abs(createdDate - currentDate);
@@ -140,7 +143,19 @@ export const resendVerificationCode = asyncHandler(
             email: { $in: [email] },
           });
           if (codeAvailable) {
-            res.status(400).json({ error: "User Code exists" });
+            const unhashedCode = generateRandomNumber();
+            const hashCode = await bcrypt.hash(unhashedCode, 10);
+            const userCode = await UserCode.findByIdAndUpdate(
+              codeAvailable._id,
+              {
+                code: hashCode,
+              },
+              { new: true }
+            );
+            res.status(201).json({
+              successful: true,
+              verificationCode: unhashedCode,
+            });
             return;
           }
           const unhashedCode = generateRandomNumber();
@@ -152,8 +167,7 @@ export const resendVerificationCode = asyncHandler(
           });
           res.status(201).json({
             successful: true,
-            userCode,
-            unhashedCode,
+            verificationCode: unhashedCode,
           });
         } else {
           res.status(400).json({ error: "User is already verified!" });
