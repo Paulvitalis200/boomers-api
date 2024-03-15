@@ -30,9 +30,7 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
         throw new Error("Email is not valid");
       }
     }
-    const userAvailable = await User.findOne({
-      $or: [{ email: userSearchValue }, { phoneNumber: userSearchValue }],
-    });
+    const userAvailable = await User.findOne({ email });
 
     if (userAvailable) {
       res.status(400);
@@ -55,7 +53,6 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
         email,
         userId: user.id,
       });
-      // sendMail();
       res.status(201).json({
         successful: true,
         userCode,
@@ -69,30 +66,6 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
     throw new Error(error);
   }
 });
-
-const transporter = nodemailer.createTransport({
-  host: "smtp.ethereal.email",
-  port: 587,
-  secure: false, // Use `true` for port 465, `false` for all other ports
-  auth: {
-    user: "api",
-    pass: "a4009212148d4e1e4ec59bd45aa47d56",
-  },
-});
-
-// async..await is not allowed in global scope, must use a wrapper
-async function sendMail() {
-  // send mail with defined transport object
-  const info = await transporter.sendMail({
-    from: "info@boomer-ville.com", // sender address
-    to: "vitalispaul48@live.com", // list of receivers
-    subject: "Hello ✔", // Subject line
-    text: "Hello world?", // plain text body
-  });
-
-  console.log("Message sent: %s", info.messageId);
-  // Message sent: <d786aa62-4e0a-070a-47ed-0b0666549519@ethereal.email>
-}
 
 export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
   try {
@@ -186,6 +159,30 @@ function generateRandomNumber(): string {
   const generateRandomNumber =
     Math.floor(Math.random() * (max - min + 1)) + min;
   return generateRandomNumber.toString();
+}
+
+const transporter = nodemailer.createTransport({
+  host: "smtp.ethereal.email",
+  port: 587,
+  secure: false, // Use `true` for port 465, `false` for all other ports
+  auth: {
+    user: "api",
+    pass: "a4009212148d4e1e4ec59bd45aa47d56",
+  },
+});
+
+// async..await is not allowed in global scope, must use a wrapper
+async function sendMail() {
+  // send mail with defined transport object
+  const info = await transporter.sendMail({
+    from: "info@boomer-ville.com", // sender address
+    to: "vitalispaul48@live.com", // list of receivers
+    subject: "Hello ✔", // Subject line
+    text: "Hello world?", // plain text body
+  });
+
+  console.log("Message sent: %s", info.messageId);
+  // Message sent: <d786aa62-4e0a-070a-47ed-0b0666549519@ethereal.email>
 }
 
 export default registerUser;
