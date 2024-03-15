@@ -69,14 +69,16 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
         unhashedCode,
       });
     } else {
-      res.status(400);
-      throw new Error("User data is not valid.");
+      res.status(400).json({ error: "User not registered." });
     }
   } catch (error: any) {
     throw new Error(error);
   }
 });
 
+//@desc Verify a user
+//@route POST /api/users/verify
+//access public
 export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
   try {
     const { email, code } = req.body;
@@ -123,6 +125,9 @@ export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
   }
 });
 
+//@desc Resend verification code to user
+//@route POST /api/users/resend-code
+//access public
 export const resendVerificationCode = asyncHandler(
   async (req: Request, res: Response) => {
     try {
