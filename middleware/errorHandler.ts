@@ -16,6 +16,13 @@ export const errorHandler = (
         stackTrace: err.stack,
       });
       break;
+    case constants.CONFLICT:
+      res.json({
+        title: "Conflict",
+        message: err.message,
+        stackTrace: err.stack,
+      });
+      break;
     case constants.NOT_FOUND:
       res.json({
         title: "Not Found",

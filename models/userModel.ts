@@ -7,19 +7,18 @@ interface IUser {
   firstName: string;
   lastName: string;
   isVerified: boolean;
+  createdAt?: any;
 }
 
 const userSchema = new Schema<IUser>(
   {
     email: {
       type: String,
-      required: false,
-      unique: true,
+      required: true,
     },
     phoneNumber: {
       type: String,
       required: false,
-      unique: true,
     },
     password: {
       type: String,
