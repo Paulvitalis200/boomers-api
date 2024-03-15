@@ -65,8 +65,7 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
       });
       res.status(201).json({
         successful: true,
-        userCode,
-        unhashedCode,
+        verificationCode: unhashedCode,
       });
     } else {
       res.status(400).json({ error: "User not registered." });
