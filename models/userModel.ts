@@ -7,6 +7,7 @@ interface IUser {
   firstName: string;
   lastName: string;
   isVerified: boolean;
+  createdAt?: any;
 }
 
 const userSchema = new Schema<IUser>(
