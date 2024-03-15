@@ -5,6 +5,9 @@ import User from "../models/userModel";
 import * as EmailValidator from "email-validator";
 import UserCode from "../models/userCodeModel";
 import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 //@desc Register a user
 //@route POST /api/users/register
@@ -63,10 +66,19 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
         email,
         userId: user.id,
       });
+
       res.status(201).json({
         successful: true,
         verificationCode: unhashedCode,
       });
+      const emailTemplate = `<div>
+      <p>Hi,</p>
+      <p>Thank you for signing up to Boomers.</p>
+      <p>Your verification code is: </p>
+      <h2>${unhashedCode}</h2>
+      <p>This code will expire in 24 hours.</p>
+      </div>`;
+      sendMail(transporter, email, emailTemplate);
     } else {
       res.status(400).json({ error: "User not registered." });
     }
@@ -116,6 +128,13 @@ export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
         );
 
         if (isVerified) {
+          const emailTemplate = `<div>
+                        <p>Hi,</p>
+                        <p>Your email has been verified successfully!</p>
+                        <p>Best,</p>
+                        <p>Boomers Support</p>
+                      </div>`;
+          sendMail(transporter, email, emailTemplate);
           res.status(200).json({ successful: true, message: "User verified!" });
         }
       } else {
@@ -152,6 +171,14 @@ export const resendVerificationCode = asyncHandler(
               },
               { new: true }
             );
+            const emailTemplate = `<div>
+            <p>Hi,</p>
+            <p>Thank you for signing up to Boomers.</p>
+            <p>Your verification code is: </p>
+            <h2>${unhashedCode}</h2>
+            <p>This code will expire in 24 hours.</p>
+          </div>`;
+            sendMail(transporter, email, emailTemplate);
             res.status(201).json({
               successful: true,
               verificationCode: unhashedCode,
@@ -165,6 +192,14 @@ export const resendVerificationCode = asyncHandler(
             email,
             userId: user.id,
           });
+          const emailTemplate = `<div>
+                        <p>Hi,</p>
+                        <p>Thank you for signing up to Boomers.</p>
+                        <p>Your verification code is: </p>
+                        <h2>${unhashedCode}</h2>
+                        <p>This code will expire in 24 hours.</p>
+                      </div>`;
+          sendMail(transporter, email, emailTemplate);
           res.status(201).json({
             successful: true,
             verificationCode: unhashedCode,
@@ -190,27 +225,32 @@ function generateRandomNumber(): string {
 }
 
 const transporter = nodemailer.createTransport({
-  host: "smtp.ethereal.email",
+  service: "gmail",
+  host: "smtp.gmail.com",
   port: 587,
   secure: false, // Use `true` for port 465, `false` for all other ports
   auth: {
-    user: "api",
-    pass: "a4009212148d4e1e4ec59bd45aa47d56",
+    user: process.env.USER_EMAIL,
+    pass: process.env.MAIL_PASSWORD,
   },
 });
 
 // async..await is not allowed in global scope, must use a wrapper
-async function sendMail() {
-  // send mail with defined transport object
-  const info = await transporter.sendMail({
-    from: "info@boomer-ville.com", // sender address
-    to: "vitalispaul48@live.com", // list of receivers
-    subject: "Hello ✔", // Subject line
-    text: "Hello world?", // plain text body
-  });
-
-  console.log("Message sent: %s", info.messageId);
-  // Message sent: <d786aa62-4e0a-070a-47ed-0b0666549519@ethereal.email>
-}
+const sendMail = async (transporter: any, user: any, template: any) => {
+  const mailOptions = {
+    from: {
+      name: "Boomers",
+      address: process.env.USER_EMAIL,
+    }, // sender address
+    to: [user], // list of receivers
+    subject: "Verification Code", // Subject line
+    html: template,
+  };
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (error: any) {
+    throw new Error(error);
+  }
+};
 
 export default registerUser;
