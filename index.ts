@@ -17,7 +17,6 @@ const port = process.env.PORT || 5001;
 
 app.use(express.json());
 app.use("/api/users", [userRouter, userProfileRouter]);
-// app.use("/api/", );
 app.use(errorHandler);
 app.disable("x-powered-by"); // less hackers know about our stack
 

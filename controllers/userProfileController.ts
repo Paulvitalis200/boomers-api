@@ -1,9 +1,6 @@
 import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
-import dotenv from "dotenv";
 import UserProfile from "../models/userProfileModel";
-
-dotenv.config();
 
 //@desc Get user
 //@route GET /api/users/:id/profile
