@@ -1,5 +1,6 @@
 import express, { Express, Request, Response } from "express";
 import userRouter from "./routes/userRoutes";
+
 import { errorHandler } from "./middleware/errorHandler";
 import connectDb from "./config/dbConnection";
 import swaggerDocs from "./swagger";
@@ -8,6 +9,7 @@ import passport from "passport";
 import dotenv from "dotenv";
 const cookieSession = require("cookie-session");
 require("./config/passport-setup");
+import userProfileRouter from "./routes/userProfileRoutes";
 
 dotenv.config();
 
@@ -40,6 +42,7 @@ app.use(passport.initialize());
 //Setting Up Session
 app.use(passport.session());
 app.use(userRouter);
+app.use("/api/users", [userRouter, userProfileRouter]);
 app.use(errorHandler);
 app.disable("x-powered-by"); // less hackers know about our stack
 
