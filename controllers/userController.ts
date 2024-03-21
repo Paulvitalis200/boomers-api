@@ -145,6 +145,7 @@ export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
           sendMail(transporter, email, emailTemplate);
           await UserProfile.create({
             userId: user?._id,
+            email,
           });
           res.status(200).json({ successful: true, message: "User verified!" });
         }

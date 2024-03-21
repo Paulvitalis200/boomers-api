@@ -17,9 +17,11 @@ const userProfileSchema = new Schema<IUserProfile>(
     },
     email: {
       type: String,
+      default: null,
     },
     phoneNumber: {
       type: String,
+      default: null,
     },
     firstName: {
       type: String,

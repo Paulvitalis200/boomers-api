@@ -1,11 +1,10 @@
 import { Schema, model } from "mongoose";
 
 interface IUser {
-  email?: string;
+  email: string;
   phoneNumber?: string;
   password: string;
   isVerified: boolean;
-  createdAt?: any;
 }
 
 const userSchema = new Schema<IUser>(
