@@ -1,10 +1,12 @@
 import express, { Express, Request, Response } from "express";
 import userRouter from "./routes/userRoutes";
+
 import { errorHandler } from "./middleware/errorHandler";
 import connectDb from "./config/dbConnection";
 import swaggerDocs from "./swagger";
 
 import dotenv from "dotenv";
+import userProfileRouter from "./routes/userProfileRoutes";
 
 dotenv.config();
 
@@ -14,7 +16,7 @@ const app: Express = express();
 const port = process.env.PORT || 5001;
 
 app.use(express.json());
-app.use("/api/users", userRouter);
+app.use("/api/users", [userRouter, userProfileRouter]);
 app.use(errorHandler);
 app.disable("x-powered-by"); // less hackers know about our stack
 

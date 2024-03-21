@@ -3,9 +3,10 @@ import bcrypt from "bcrypt";
 import asyncHandler from "express-async-handler";
 import User from "../models/userModel";
 import * as EmailValidator from "email-validator";
-import UserCode from "../models/userCodeModel";
+import UserVerificationCode from "../models/userVerificationCodeModel";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
+import UserProfile from "../models/userProfileModel";
 
 dotenv.config();
 
@@ -61,7 +62,7 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
       const unhashedCode = generateRandomNumber();
       const hashCode = await bcrypt.hash(unhashedCode, 10);
 
-      const userCode = await UserCode.create({
+      const userCode = await UserVerificationCode.create({
         code: hashCode,
         email,
         userId: user.id,
@@ -94,37 +95,44 @@ export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
   try {
     const { email, verificationCode } = req.body;
 
-    const hashedPassword = await UserCode.find({ email: { $in: [email] } });
+    const hashedVerificationCode = await UserVerificationCode.findOne({
+      email: { $in: [email] },
+    });
 
-    if (!hashedPassword.length) {
-      res.status(400).json({ error: "User does not exist." });
-      return;
+    const user = await User.findOne({
+      email,
+    });
+
+    if (!hashedVerificationCode) {
+      if (!user) {
+        res.status(400).json({ error: "User does not exist." });
+        return;
+      } else {
+        res.status(400).json({ error: "User already verified." });
+        return;
+      }
     }
     const isCorrect = await bcrypt.compare(
-      verificationCode,
-      hashedPassword[0].code
+      verificationCode.toString(),
+      hashedVerificationCode.code
     );
-    const createdDate: any = hashedPassword[0]._id.getTimestamp();
+    const createdDate: any = hashedVerificationCode._id.getTimestamp();
     const currentDate: any = new Date();
     const diffTime = Math.abs(createdDate - currentDate);
     const twentyFourHours = 1000 * 60 * 60 * 24;
 
     if (diffTime > twentyFourHours) {
-      await UserCode.findByIdAndDelete(hashedPassword[0]._id);
+      await UserVerificationCode.findByIdAndDelete(hashedVerificationCode._id);
       res.status(400).json({ error: "User code expired" });
       return;
     } else {
       if (isCorrect) {
-        const user = await User.findOne({
-          email,
-        });
-
         const updateUser = await User.findByIdAndUpdate(user?._id, {
           isVerified: true,
         });
 
-        const isVerified = await UserCode.findByIdAndDelete(
-          hashedPassword[0]._id
+        const isVerified = await UserVerificationCode.findByIdAndDelete(
+          hashedVerificationCode._id
         );
 
         if (isVerified) {
@@ -135,6 +143,10 @@ export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
                         <p>Boomers Support</p>
                       </div>`;
           sendMail(transporter, email, emailTemplate);
+          await UserProfile.create({
+            userId: user?._id,
+            email,
+          });
           res.status(200).json({ successful: true, message: "User verified!" });
         }
       } else {
@@ -158,13 +170,13 @@ export const resendVerificationCode = asyncHandler(
 
       if (user) {
         if (!user.isVerified) {
-          const codeAvailable = await UserCode.findOne({
+          const codeAvailable = await UserVerificationCode.findOne({
             email: { $in: [email] },
           });
           if (codeAvailable) {
             const unhashedCode = generateRandomNumber();
             const hashCode = await bcrypt.hash(unhashedCode, 10);
-            const userCode = await UserCode.findByIdAndUpdate(
+            const userCode = await UserVerificationCode.findByIdAndUpdate(
               codeAvailable._id,
               {
                 code: hashCode,
@@ -187,7 +199,7 @@ export const resendVerificationCode = asyncHandler(
           }
           const unhashedCode = generateRandomNumber();
           const hashCode = await bcrypt.hash(unhashedCode, 10);
-          const userCode = await UserCode.create({
+          const userCode = await UserVerificationCode.create({
             code: hashCode,
             email,
             userId: user.id,
@@ -215,6 +227,31 @@ export const resendVerificationCode = asyncHandler(
     }
   }
 );
+
+//@desc Get user
+//@route GET /api/users/:id
+//access public
+export const getUser = asyncHandler(async (req: Request, res: Response) => {
+  try {
+    const user = await User.findOne({ _id: req.params.id });
+
+    if (!user) {
+      res.status(404).json({ message: "User does not exist" });
+      return;
+    }
+    res.status(200).json(user);
+  } catch (error: any) {
+    throw new Error(error);
+  }
+});
+
+//@desc Get all users
+//@route GET /api/users
+//access public
+export const getUsers = asyncHandler(async (req: Request, res: Response) => {
+  const users = await User.find({});
+  res.status(200).json(users);
+});
 
 function generateRandomNumber(): string {
   const min = 100000;
