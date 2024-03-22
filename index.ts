@@ -7,6 +7,7 @@ import swaggerDocs from "./swagger";
 
 import dotenv from "dotenv";
 import userProfileRouter from "./routes/userProfileRoutes";
+import teamRouter from "./routes/team/teamRoutes";
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ const port = process.env.PORT || 5001;
 
 app.use(express.json());
 app.use("/api/users", [userRouter, userProfileRouter]);
+app.use("/api/teams", teamRouter);
 app.use(errorHandler);
 app.disable("x-powered-by"); // less hackers know about our stack
 
