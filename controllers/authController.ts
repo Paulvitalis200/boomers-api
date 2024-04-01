@@ -77,6 +77,18 @@ export const verifyUserCode = asyncHandler(
         return;
       }
 
+      // Check if the code has expired
+      const createdDate: any = signInAuthCode._id.getTimestamp();
+      const currentDate: any = new Date();
+      const diffTime = Math.abs(createdDate - currentDate);
+      const fiveminutes = 1000 * 60 * 5;
+      console.log(createdDate);
+      if (diffTime > fiveminutes) {
+        await UserCode.findByIdAndDelete(signInAuthCode._id);
+        res.status(400).json({ error: 'Authentication code expired' });
+        return;
+      }
+
       // Compare the entered code with the hashed code retrieved from the database
       const isCodeValid = await bcrypt.compare(
         authCode,
@@ -91,8 +103,8 @@ export const verifyUserCode = asyncHandler(
       // Delete the authentication code from the database
       await UserCode.deleteOne({ userId: user._id });
 
-      // Create a JWT token with an expiration time of 1 hour (3600 seconds)
-      const token = jwt.sign({ userId: user._id }, 'your_secret_key', {
+      // Create a JWT token with an expiration time of 1 hour
+      const token = jwt.sign({ userId: user._id }, 'token_secret', {
         expiresIn: '1h',
       });
 
@@ -102,59 +114,6 @@ export const verifyUserCode = asyncHandler(
     }
   }
 );
-
-//@desc Resend verification code to user
-//@route POST /api/users/resend-code
-//access public
-// export const resendAuthVerificationCode = asyncHandler(
-//   async (req: Request, res: Response) => {
-//     try {
-//       const { email } = req.body;
-
-//       const user = await User.findOne({ email: { $in: [email] } });
-
-//       if (user) {
-//         if (!user.isVerified) {
-//           const codeAvailable = await UserCode.findOne({
-//             email: { $in: [email] },
-//           });
-//           if (codeAvailable) {
-//             const hashCode = await bcrypt.hash(unhashedCode, 10);
-//             const userCode = await UserCode.findByIdAndUpdate(
-//               codeAvailable._id,
-//               {
-//                 code: hashCode,
-//               },
-//               { new: true }
-//             );
-//             res.status(201).json({
-//               successful: true,
-//               verificationCode: unhashedCode,
-//             });
-//             return;
-//           }
-
-//           const hashCode = await bcrypt.hash(unhashedCode, 10);
-//           const userCode = await UserCode.create({
-//             code: hashCode,
-//             email,
-//             userId: user._id,
-//           });
-//           res.status(201).json({
-//             successful: true,
-//             verificationCode: unhashedCode,
-//           });
-//         } else {
-//           res.status(400).json({ error: 'User is already verified!' });
-//         }
-//       } else {
-//         res.status(400).json({ error: 'User does not exist' });
-//       }
-//     } catch (error: any) {
-//       res.status(400).json({ error: error });
-//     }
-//   }
-// );
 
 // Function to generate a random authentication code
 const generateAuthCode = () => {
