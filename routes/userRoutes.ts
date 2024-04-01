@@ -1,8 +1,9 @@
-import express from "express";
+import express from 'express';
 import registerUser, {
   resendVerificationCode,
   verifyUser,
-} from "../controllers/userController";
+} from '../controllers/userController';
+import signInUser from '../controllers/authController';
 
 const userRouter = express.Router();
 
@@ -41,7 +42,44 @@ const userRouter = express.Router();
  *      500:
  *        description: Server Error
  */
-userRouter.post("/register", registerUser);
+userRouter.post('/register', registerUser);
+
+/**
+ * @openapi
+ * '/api/users/signin':
+ *  post:
+ *     tags:
+ *     - User Controller
+ *     summary: Create a user
+ *     requestBody:
+ *      required: true
+ *      content:
+ *        application/json:
+ *           schema:
+ *            type: object
+ *            required:
+ *              - email
+ *              - password
+ *            properties:
+ *              email:
+ *                type: string
+ *                default: johndoe@mail.com
+ *              password:
+ *                type: string
+ *                default: johnDoe20!@232
+ *     responses:
+ *      201:
+ *        description: Created
+ *      400:
+ *        description: Bad Request
+ *      409:
+ *        description: Conflict
+ *      404:
+ *        description: Not Found
+ *      500:
+ *        description: Server Error
+ */
+userRouter.post('/signin', signInUser);
 
 /**
  * @openapi
@@ -76,7 +114,7 @@ userRouter.post("/register", registerUser);
  *      500:
  *        description: Server Error
  */
-userRouter.post("/verify", verifyUser);
+userRouter.post('/verify', verifyUser);
 
 /**
  * @openapi
@@ -107,6 +145,6 @@ userRouter.post("/verify", verifyUser);
  *      500:
  *        description: Server Error
  */
-userRouter.post("/resend-verification", resendVerificationCode);
+userRouter.post('/resend-verification', resendVerificationCode);
 
 export default userRouter;
