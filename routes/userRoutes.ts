@@ -3,7 +3,7 @@ import registerUser, {
   resendVerificationCode,
   verifyUser,
 } from '../controllers/userController';
-import signInUser from '../controllers/authController';
+import signInUser, { verifyUserCode } from '../controllers/authController';
 
 const userRouter = express.Router();
 
@@ -80,6 +80,41 @@ userRouter.post('/register', registerUser);
  *        description: Server Error
  */
 userRouter.post('/signin', signInUser);
+
+/**
+ * @openapi
+ * '/api/users/verify-code':
+ *  post:
+ *     tags:
+ *     - User Controller
+ *     summary: Verify a user
+ *     requestBody:
+ *      required: true
+ *      content:
+ *        application/json:
+ *           schema:
+ *            type: object
+ *            required:
+ *              - email
+ *              - authCode
+ *            properties:
+ *              email:
+ *                type: string
+ *                default: johndoe@mail.com
+ *              authCode:
+ *                type: string
+ *                default: 433443
+ *     responses:
+ *      200:
+ *        description: Success
+ *      400:
+ *        description: Bad Request
+ *      404:
+ *        description: Not Found
+ *      500:
+ *        description: Server Error
+ */
+userRouter.post('/verify-code', verifyUserCode);
 
 /**
  * @openapi
