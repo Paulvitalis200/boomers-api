@@ -50,7 +50,7 @@ userRouter.post('/register', registerUser);
  *  post:
  *     tags:
  *     - User Controller
- *     summary: Create a user
+ *     summary: Sign in a user
  *     requestBody:
  *      required: true
  *      content:
@@ -87,7 +87,7 @@ userRouter.post('/signin', signInUser);
  *  post:
  *     tags:
  *     - User Controller
- *     summary: Verify a user
+ *     summary: Verify user Authentication code
  *     requestBody:
  *      required: true
  *      content:
