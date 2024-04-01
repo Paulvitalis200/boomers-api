@@ -1,5 +1,7 @@
 import express from 'express';
 import registerUser, {
+  getUser,
+  getUsers,
   resendVerificationCode,
   verifyUser,
 } from '../controllers/userController';
@@ -181,5 +183,43 @@ userRouter.post('/verify', verifyUser);
  *        description: Server Error
  */
 userRouter.post('/resend-verification', resendVerificationCode);
+
+/**
+ * @openapi
+ * '/api/users':
+ *  get:
+ *     tags:
+ *     - User Controller
+ *     summary: Returns list of users
+ *     responses:
+ *      200:
+ *        description: Success
+ *      400:
+ *        description: Bad Request
+ *      404:
+ *        description: Not Found
+ *      500:
+ *        description: Server Error
+ */
+userRouter.get("/", getUsers);
+
+/**
+ * @openapi
+ * '/api/users/:id':
+ *  post:
+ *     tags:
+ *     - User Controller
+ *     summary: Returns one user
+ *     responses:
+ *      200:
+ *        description: Success
+ *      400:
+ *        description: Bad Request
+ *      404:
+ *        description: Not Found
+ *      500:
+ *        description: Server Error
+ */
+userRouter.get("/:id", getUser);
 
 export default userRouter;

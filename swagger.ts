@@ -1,6 +1,10 @@
-import { Request, Response } from 'express';
-import swaggerJsdoc from 'swagger-jsdoc';
-import swaggerUi from 'swagger-ui-express';
+import { Request, Response } from "express";
+import swaggerJsdoc from "swagger-jsdoc";
+import swaggerUi from "swagger-ui-express";
+import dotenv from "dotenv";
+
+dotenv.config();
+
 const options = {
   definition: {
     openapi: '3.0.0',
@@ -16,8 +20,8 @@ const options = {
     },
     servers: [
       {
-        url: 'http://localhost:5000/',
-        description: 'Local server',
+        url: `http://localhost:${process.env.PORT}/`,
+        description: "Local server",
       },
     ],
   },

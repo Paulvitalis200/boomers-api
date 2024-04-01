@@ -3,8 +3,12 @@ import bcrypt from 'bcrypt';
 import asyncHandler from 'express-async-handler';
 import User from '../models/userModel';
 import * as EmailValidator from 'email-validator';
-import UserCode from '../models/userCodeModel';
+import UserVerificationCode from '../models/userVerificationCodeModel';
 import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+import UserProfile from '../models/userProfileModel';
+
+dotenv.config();
 
 //@desc Register a user
 //@route POST /api/users/register
@@ -58,15 +62,24 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
       const unhashedCode = generateRandomNumber();
       const hashCode = await bcrypt.hash(unhashedCode, 10);
 
-      const userCode = await UserCode.create({
+      const userCode = await UserVerificationCode.create({
         code: hashCode,
         email,
         userId: user.id,
       });
+
       res.status(201).json({
         successful: true,
         verificationCode: unhashedCode,
       });
+      const emailTemplate = `<div>
+      <p>Hi,</p>
+      <p>Thank you for signing up to Boomers.</p>
+      <p>Your verification code is: </p>
+      <h2>${unhashedCode}</h2>
+      <p>This code will expire in 24 hours.</p>
+      </div>`;
+      sendMail(transporter, email, emailTemplate);
     } else {
       res.status(400).json({ error: 'User not registered.' });
     }
@@ -82,40 +95,58 @@ export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
   try {
     const { email, verificationCode } = req.body;
 
-    const hashedPassword = await UserCode.find({ email: { $in: [email] } });
+    const hashedVerificationCode = await UserVerificationCode.findOne({
+      email: { $in: [email] },
+    });
 
-    if (!hashedPassword.length) {
-      res.status(400).json({ error: 'User does not exist.' });
-      return;
+    const user = await User.findOne({
+      email,
+    });
+
+    if (!hashedVerificationCode) {
+      if (!user) {
+        res.status(400).json({ error: 'User does not exist.' });
+        return;
+      } else {
+        res.status(400).json({ error: 'User already verified.' });
+        return;
+      }
     }
     const isCorrect = await bcrypt.compare(
-      verificationCode,
-      hashedPassword[0].code
+      verificationCode.toString(),
+      hashedVerificationCode.code
     );
-    const createdDate: any = hashedPassword[0]._id.getTimestamp();
+    const createdDate: any = hashedVerificationCode._id.getTimestamp();
     const currentDate: any = new Date();
     const diffTime = Math.abs(createdDate - currentDate);
     const twentyFourHours = 1000 * 60 * 60 * 24;
 
     if (diffTime > twentyFourHours) {
-      await UserCode.findByIdAndDelete(hashedPassword[0]._id);
+      await UserVerificationCode.findByIdAndDelete(hashedVerificationCode._id);
       res.status(400).json({ error: 'User code expired' });
       return;
     } else {
       if (isCorrect) {
-        const user = await User.findOne({
-          email,
-        });
-
         const updateUser = await User.findByIdAndUpdate(user?._id, {
           isVerified: true,
         });
 
-        const isVerified = await UserCode.findByIdAndDelete(
-          hashedPassword[0]._id
+        const isVerified = await UserVerificationCode.findByIdAndDelete(
+          hashedVerificationCode._id
         );
 
         if (isVerified) {
+          const emailTemplate = `<div>
+                        <p>Hi,</p>
+                        <p>Your email has been verified successfully!</p>
+                        <p>Best,</p>
+                        <p>Boomers Support</p>
+                      </div>`;
+          sendMail(transporter, email, emailTemplate);
+          await UserProfile.create({
+            userId: user?._id,
+            email,
+          });
           res.status(200).json({ successful: true, message: 'User verified!' });
         }
       } else {
@@ -139,19 +170,27 @@ export const resendVerificationCode = asyncHandler(
 
       if (user) {
         if (!user.isVerified) {
-          const codeAvailable = await UserCode.findOne({
+          const codeAvailable = await UserVerificationCode.findOne({
             email: { $in: [email] },
           });
           if (codeAvailable) {
             const unhashedCode = generateRandomNumber();
             const hashCode = await bcrypt.hash(unhashedCode, 10);
-            const userCode = await UserCode.findByIdAndUpdate(
+            const userCode = await UserVerificationCode.findByIdAndUpdate(
               codeAvailable._id,
               {
                 code: hashCode,
               },
               { new: true }
             );
+            const emailTemplate = `<div>
+            <p>Hi,</p>
+            <p>Thank you for signing up to Boomers.</p>
+            <p>Your verification code is: </p>
+            <h2>${unhashedCode}</h2>
+            <p>This code will expire in 24 hours.</p>
+          </div>`;
+            sendMail(transporter, email, emailTemplate);
             res.status(201).json({
               successful: true,
               verificationCode: unhashedCode,
@@ -160,11 +199,19 @@ export const resendVerificationCode = asyncHandler(
           }
           const unhashedCode = generateRandomNumber();
           const hashCode = await bcrypt.hash(unhashedCode, 10);
-          const userCode = await UserCode.create({
+          const userCode = await UserVerificationCode.create({
             code: hashCode,
             email,
             userId: user.id,
           });
+          const emailTemplate = `<div>
+                        <p>Hi,</p>
+                        <p>Thank you for signing up to Boomers.</p>
+                        <p>Your verification code is: </p>
+                        <h2>${unhashedCode}</h2>
+                        <p>This code will expire in 24 hours.</p>
+                      </div>`;
+          sendMail(transporter, email, emailTemplate);
           res.status(201).json({
             successful: true,
             verificationCode: unhashedCode,
@@ -181,6 +228,31 @@ export const resendVerificationCode = asyncHandler(
   }
 );
 
+//@desc Get user
+//@route GET /api/users/:id
+//access public
+export const getUser = asyncHandler(async (req: Request, res: Response) => {
+  try {
+    const user = await User.findOne({ _id: req.params.id });
+
+    if (!user) {
+      res.status(404).json({ message: 'User does not exist' });
+      return;
+    }
+    res.status(200).json(user);
+  } catch (error: any) {
+    throw new Error(error);
+  }
+});
+
+//@desc Get all users
+//@route GET /api/users
+//access public
+export const getUsers = asyncHandler(async (req: Request, res: Response) => {
+  const users = await User.find({});
+  res.status(200).json(users);
+});
+
 function generateRandomNumber(): string {
   const min = 100000;
   const max = 999999;
@@ -190,27 +262,32 @@ function generateRandomNumber(): string {
 }
 
 const transporter = nodemailer.createTransport({
-  host: 'smtp.ethereal.email',
+  service: 'gmail',
+  host: 'smtp.gmail.com',
   port: 587,
   secure: false, // Use `true` for port 465, `false` for all other ports
   auth: {
-    user: 'api',
-    pass: 'a4009212148d4e1e4ec59bd45aa47d56',
+    user: process.env.USER_EMAIL,
+    pass: process.env.MAIL_PASSWORD,
   },
 });
 
 // async..await is not allowed in global scope, must use a wrapper
-async function sendMail() {
-  // send mail with defined transport object
-  const info = await transporter.sendMail({
-    from: 'info@boomer-ville.com', // sender address
-    to: 'vitalispaul48@live.com', // list of receivers
-    subject: 'Hello ✔', // Subject line
-    text: 'Hello world?', // plain text body
-  });
-
-  console.log('Message sent: %s', info.messageId);
-  // Message sent: <d786aa62-4e0a-070a-47ed-0b0666549519@ethereal.email>
-}
+const sendMail = async (transporter: any, user: any, template: any) => {
+  const mailOptions = {
+    from: {
+      name: 'Boomers',
+      address: process.env.USER_EMAIL,
+    }, // sender address
+    to: [user], // list of receivers
+    subject: 'Verification Code', // Subject line
+    html: template,
+  };
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (error: any) {
+    throw new Error(error);
+  }
+};
 
 export default registerUser;
