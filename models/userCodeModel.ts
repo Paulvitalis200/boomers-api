@@ -1,13 +1,13 @@
 import { Schema, model } from 'mongoose';
 
-interface IUserVerificationCode {
+interface IUserCode {
   userId: string;
   email?: string;
   code: string;
   signinCode: string;
 }
 
-const userVerificationCodeSchema = new Schema<IUserVerificationCode>(
+const userCodeSchema = new Schema<IUserCode>(
   {
     userId: {
       type: String,
@@ -27,9 +27,6 @@ const userVerificationCodeSchema = new Schema<IUserVerificationCode>(
   }
 );
 
-const UserVerificationCode = model<IUserVerificationCode>(
-  'UserVerificationCode',
-  userVerificationCodeSchema
-);
+const UserCode = model<IUserCode>('UserCode', userCodeSchema);
 
-export default UserVerificationCode;
+export default UserCode;
