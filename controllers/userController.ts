@@ -1,12 +1,12 @@
-import { Request, Response } from "express";
-import bcrypt from "bcrypt";
-import asyncHandler from "express-async-handler";
-import User from "../models/userModel";
-import * as EmailValidator from "email-validator";
-import UserVerificationCode from "../models/userVerificationCodeModel";
-import nodemailer from "nodemailer";
-import dotenv from "dotenv";
-import UserProfile from "../models/userProfileModel";
+import { Request, Response } from 'express';
+import bcrypt from 'bcrypt';
+import asyncHandler from 'express-async-handler';
+import User from '../models/userModel';
+import * as EmailValidator from 'email-validator';
+import UserVerificationCode from '../models/userVerificationCodeModel';
+import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+import UserProfile from '../models/userProfileModel';
 
 dotenv.config();
 
@@ -18,11 +18,11 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
     const { phoneNumber, email, password } = req.body;
     if (!email && !phoneNumber) {
       res.status(400);
-      throw new Error("Please put an email or phone number");
+      throw new Error('Please put an email or phone number');
     }
     if (!password.trim()) {
       res.status(400);
-      throw new Error("Please put a password");
+      throw new Error('Please put a password');
     }
 
     if (email) {
@@ -30,14 +30,14 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
 
       if (!isValid) {
         res.status(400);
-        throw new Error("Email is not valid");
+        throw new Error('Email is not valid');
       }
     }
     const userAvailable = await User.findOne({ email });
 
     if (userAvailable) {
       res.status(409);
-      throw new Error("User already registered!");
+      throw new Error('User already registered!');
     }
 
     const regexPattern =
@@ -46,7 +46,7 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
     if (!password.trim().match(regexPattern)) {
       res.status(400).json({
         error:
-          "Password must be 8-15 characters, have at least one alphabet (uppercase or lowercase), have at least one number present and have at least one special character (-,.,@,$,!,%,+,=,<,>,#,?,&)",
+          'Password must be 8-15 characters, have at least one alphabet (uppercase or lowercase), have at least one number present and have at least one special character (-,.,@,$,!,%,+,=,<,>,#,?,&)',
       });
       return;
     }
@@ -81,7 +81,7 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
       </div>`;
       sendMail(transporter, email, emailTemplate);
     } else {
-      res.status(400).json({ error: "User not registered." });
+      res.status(400).json({ error: 'User not registered.' });
     }
   } catch (error: any) {
     throw new Error(error);
@@ -105,10 +105,10 @@ export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
 
     if (!hashedVerificationCode) {
       if (!user) {
-        res.status(400).json({ error: "User does not exist." });
+        res.status(400).json({ error: 'User does not exist.' });
         return;
       } else {
-        res.status(400).json({ error: "User already verified." });
+        res.status(400).json({ error: 'User already verified.' });
         return;
       }
     }
@@ -123,7 +123,7 @@ export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
 
     if (diffTime > twentyFourHours) {
       await UserVerificationCode.findByIdAndDelete(hashedVerificationCode._id);
-      res.status(400).json({ error: "User code expired" });
+      res.status(400).json({ error: 'User code expired' });
       return;
     } else {
       if (isCorrect) {
@@ -147,10 +147,10 @@ export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
             userId: user?._id,
             email,
           });
-          res.status(200).json({ successful: true, message: "User verified!" });
+          res.status(200).json({ successful: true, message: 'User verified!' });
         }
       } else {
-        res.status(400).json({ error: "User code invalid" });
+        res.status(400).json({ error: 'User code invalid' });
       }
     }
   } catch (error: any) {
@@ -217,10 +217,10 @@ export const resendVerificationCode = asyncHandler(
             verificationCode: unhashedCode,
           });
         } else {
-          res.status(400).json({ error: "User is already verified!" });
+          res.status(400).json({ error: 'User is already verified!' });
         }
       } else {
-        res.status(400).json({ error: "User does not exist" });
+        res.status(400).json({ error: 'User does not exist' });
       }
     } catch (error: any) {
       res.status(400).json({ error: error });
@@ -236,7 +236,7 @@ export const getUser = asyncHandler(async (req: Request, res: Response) => {
     const user = await User.findOne({ _id: req.params.id });
 
     if (!user) {
-      res.status(404).json({ message: "User does not exist" });
+      res.status(404).json({ message: 'User does not exist' });
       return;
     }
     res.status(200).json(user);
@@ -262,8 +262,8 @@ function generateRandomNumber(): string {
 }
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
-  host: "smtp.gmail.com",
+  service: 'gmail',
+  host: 'smtp.gmail.com',
   port: 587,
   secure: false, // Use `true` for port 465, `false` for all other ports
   auth: {
@@ -276,11 +276,11 @@ const transporter = nodemailer.createTransport({
 const sendMail = async (transporter: any, user: any, template: any) => {
   const mailOptions = {
     from: {
-      name: "Boomers",
+      name: 'Boomers',
       address: process.env.USER_EMAIL,
     }, // sender address
     to: [user], // list of receivers
-    subject: "Verification Code", // Subject line
+    subject: 'Verification Code', // Subject line
     html: template,
   };
   try {
