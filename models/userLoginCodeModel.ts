@@ -1,4 +1,4 @@
-import { Schema, model } from 'mongoose';
+import { Schema, model } from "mongoose";
 
 interface IUserCode {
   userId: string;
@@ -7,7 +7,7 @@ interface IUserCode {
   signinCode: string;
 }
 
-const userCodeSchema = new Schema<IUserCode>(
+const userLoginCodeSchema = new Schema<IUserCode>(
   {
     userId: {
       type: String,
@@ -27,6 +27,6 @@ const userCodeSchema = new Schema<IUserCode>(
   }
 );
 
-const UserCode = model<IUserCode>('UserCode', userCodeSchema);
+const UserLoginCode = model<IUserCode>("UserLoginCode", userLoginCodeSchema);
 
-export default UserCode;
+export default UserLoginCode;
