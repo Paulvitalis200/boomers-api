@@ -1,12 +1,12 @@
-import { Request, Response } from 'express';
-import bcrypt from 'bcrypt';
-import asyncHandler from 'express-async-handler';
-import User from '../models/userModel';
-import * as EmailValidator from 'email-validator';
-import UserVerificationCode from '../models/userVerificationCodeModel';
-import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
-import UserProfile from '../models/userProfileModel';
+import { Request, Response } from "express";
+import bcrypt from "bcrypt";
+import asyncHandler from "express-async-handler";
+import User from "../models/userModel";
+import * as EmailValidator from "email-validator";
+import UserVerificationCode from "../models/userVerificationCodeModel";
+import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+import UserProfile from "../models/userProfileModel";
 
 dotenv.config();
 
@@ -18,26 +18,31 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
     const { phoneNumber, email, password } = req.body;
     if (!email && !phoneNumber) {
       res.status(400);
-      throw new Error('Please put an email or phone number');
+      throw new Error("Please put an email or phone number");
     }
     if (!password.trim()) {
       res.status(400);
-      throw new Error('Please put a password');
+      throw new Error("Please put a password");
     }
 
+    if (email && phoneNumber) {
+      res.status(400);
+      throw new Error("Please select either email or phone number");
+    }
+
+    let userAvailable;
     if (email) {
       const isValid = EmailValidator.validate(email);
 
       if (!isValid) {
         res.status(400);
-        throw new Error('Email is not valid');
+        throw new Error("Email is not valid");
       }
+      userAvailable = await User.findOne({ email });
     }
-    const userAvailable = await User.findOne({ email });
 
-    if (userAvailable) {
-      res.status(409);
-      throw new Error('User already registered!');
+    if (phoneNumber) {
+      userAvailable = await User.findOne({ phoneNumber });
     }
 
     const regexPattern =
@@ -46,16 +51,22 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
     if (!password.trim().match(regexPattern)) {
       res.status(400).json({
         error:
-          'Password must be 8-15 characters, have at least one alphabet (uppercase or lowercase), have at least one number present and have at least one special character (-,.,@,$,!,%,+,=,<,>,#,?,&)',
+          "Password must be 8-15 characters, have at least one alphabet (uppercase or lowercase), have at least one number present and have at least one special character (-,.,@,$,!,%,+,=,<,>,#,?,&)",
       });
       return;
     }
 
     const hashPassword = await bcrypt.hash(password.trim(), 10);
 
+    if (userAvailable) {
+      res.status(409);
+      throw new Error("User already registered!");
+    }
+
     const user = await User.create({
       password: hashPassword,
       email,
+      phoneNumber,
     });
 
     if (user) {
@@ -64,6 +75,7 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
 
       const userCode = await UserVerificationCode.create({
         code: hashCode,
+        phoneNumber,
         email,
         userId: user.id,
       });
@@ -72,16 +84,18 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
         successful: true,
         verificationCode: unhashedCode,
       });
-      const emailTemplate = `<div>
-      <p>Hi,</p>
-      <p>Thank you for signing up to Boomers.</p>
-      <p>Your verification code is: </p>
-      <h2>${unhashedCode}</h2>
-      <p>This code will expire in 24 hours.</p>
-      </div>`;
-      sendMail(transporter, email, emailTemplate);
+      if (email) {
+        const emailTemplate = `<div>
+        <p>Hi,</p>
+        <p>Thank you for signing up to Boomers.</p>
+        <p>Your verification code is: </p>
+        <h2>${unhashedCode}</h2>
+        <p>This code will expire in 24 hours.</p>
+        </div>`;
+        sendMail(transporter, email, emailTemplate);
+      }
     } else {
-      res.status(400).json({ error: 'User not registered.' });
+      res.status(400).json({ error: "User not registered." });
     }
   } catch (error: any) {
     throw new Error(error);
@@ -93,22 +107,42 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
 //access public
 export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
   try {
-    const { email, verificationCode } = req.body;
+    const { email, phoneNumber, verificationCode } = req.body;
 
-    const hashedVerificationCode = await UserVerificationCode.findOne({
-      email: { $in: [email] },
-    });
+    if (!email && !phoneNumber) {
+      res.status(400);
+      throw new Error("Please put an email or phone number");
+    }
 
-    const user = await User.findOne({
-      email,
-    });
+    if (email && phoneNumber) {
+      res.status(400);
+      throw new Error("Please select either email or phone number");
+    }
+
+    let hashedVerificationCode;
+    let user;
+    if (email) {
+      hashedVerificationCode = await UserVerificationCode.findOne({
+        email: { $in: [email] },
+      });
+      user = await User.findOne({
+        email,
+      });
+    } else {
+      hashedVerificationCode = await UserVerificationCode.findOne({
+        phoneNumber: { $in: [phoneNumber] },
+      });
+      user = await User.findOne({
+        phoneNumber,
+      });
+    }
 
     if (!hashedVerificationCode) {
       if (!user) {
-        res.status(400).json({ error: 'User does not exist.' });
+        res.status(400).json({ error: "User does not exist." });
         return;
       } else {
-        res.status(400).json({ error: 'User already verified.' });
+        res.status(400).json({ error: "User already verified." });
         return;
       }
     }
@@ -123,7 +157,7 @@ export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
 
     if (diffTime > twentyFourHours) {
       await UserVerificationCode.findByIdAndDelete(hashedVerificationCode._id);
-      res.status(400).json({ error: 'User code expired' });
+      res.status(400).json({ error: "User code expired" });
       return;
     } else {
       if (isCorrect) {
@@ -136,21 +170,24 @@ export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
         );
 
         if (isVerified) {
-          const emailTemplate = `<div>
-                        <p>Hi,</p>
-                        <p>Your email has been verified successfully!</p>
-                        <p>Best,</p>
-                        <p>Boomers Support</p>
-                      </div>`;
-          sendMail(transporter, email, emailTemplate);
+          if (email) {
+            const emailTemplate = `<div>
+            <p>Hi,</p>
+            <p>Your email has been verified successfully!</p>
+            <p>Best,</p>
+            <p>Boomers Support</p>
+          </div>`;
+            sendMail(transporter, email, emailTemplate);
+          }
           await UserProfile.create({
             userId: user?._id,
             email,
+            phoneNumber,
           });
-          res.status(200).json({ successful: true, message: 'User verified!' });
+          res.status(200).json({ successful: true, message: "User verified!" });
         }
       } else {
-        res.status(400).json({ error: 'User code invalid' });
+        res.status(400).json({ error: "User code invalid" });
       }
     }
   } catch (error: any) {
@@ -159,20 +196,42 @@ export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
 });
 
 //@desc Resend verification code to user
-//@route POST /api/users/resend-code
+//@route POST /api/users/resend-verification
 //access public
 export const resendVerificationCode = asyncHandler(
   async (req: Request, res: Response) => {
     try {
-      const { email } = req.body;
+      const { email, phoneNumber } = req.body;
 
-      const user = await User.findOne({ email: { $in: [email] } });
+      let user;
+      if (email) user = await User.findOne({ email: { $in: [email] } });
+
+      if (phoneNumber)
+        user = await User.findOne({ phoneNumber: { $in: [phoneNumber] } });
+
+      if (!email && !phoneNumber) {
+        res.status(400);
+        throw new Error("Please put an email or phone number");
+      }
+
+      if (email && phoneNumber) {
+        res.status(400);
+        throw new Error("Please select either email or phone number");
+      }
 
       if (user) {
         if (!user.isVerified) {
-          const codeAvailable = await UserVerificationCode.findOne({
-            email: { $in: [email] },
-          });
+          let codeAvailable;
+          if (email) {
+            codeAvailable = await UserVerificationCode.findOne({
+              email: { $in: [email] },
+            });
+          } else {
+            codeAvailable = await UserVerificationCode.findOne({
+              phoneNumber: { $in: [phoneNumber] },
+            });
+          }
+
           if (codeAvailable) {
             const unhashedCode = generateRandomNumber();
             const hashCode = await bcrypt.hash(unhashedCode, 10);
@@ -183,44 +242,27 @@ export const resendVerificationCode = asyncHandler(
               },
               { new: true }
             );
-            const emailTemplate = `<div>
-            <p>Hi,</p>
-            <p>Thank you for signing up to Boomers.</p>
-            <p>Your verification code is: </p>
-            <h2>${unhashedCode}</h2>
-            <p>This code will expire in 24 hours.</p>
-          </div>`;
-            sendMail(transporter, email, emailTemplate);
+            if (email) {
+              const emailTemplate = `<div>
+              <p>Hi,</p>
+              <p>You requested a new verification code.</p>
+              <p>Your verification code is: </p>
+              <h2>${unhashedCode}</h2>
+              <p>This code will expire in 24 hours.</p>
+            </div>`;
+              sendMail(transporter, email, emailTemplate);
+            }
             res.status(201).json({
               successful: true,
               verificationCode: unhashedCode,
             });
             return;
           }
-          const unhashedCode = generateRandomNumber();
-          const hashCode = await bcrypt.hash(unhashedCode, 10);
-          const userCode = await UserVerificationCode.create({
-            code: hashCode,
-            email,
-            userId: user.id,
-          });
-          const emailTemplate = `<div>
-                        <p>Hi,</p>
-                        <p>Thank you for signing up to Boomers.</p>
-                        <p>Your verification code is: </p>
-                        <h2>${unhashedCode}</h2>
-                        <p>This code will expire in 24 hours.</p>
-                      </div>`;
-          sendMail(transporter, email, emailTemplate);
-          res.status(201).json({
-            successful: true,
-            verificationCode: unhashedCode,
-          });
         } else {
-          res.status(400).json({ error: 'User is already verified!' });
+          res.status(400).json({ error: "User is already verified!" });
         }
       } else {
-        res.status(400).json({ error: 'User does not exist' });
+        res.status(400).json({ error: "User does not exist" });
       }
     } catch (error: any) {
       res.status(400).json({ error: error });
@@ -236,7 +278,7 @@ export const getUser = asyncHandler(async (req: Request, res: Response) => {
     const user = await User.findOne({ _id: req.params.id });
 
     if (!user) {
-      res.status(404).json({ message: 'User does not exist' });
+      res.status(404).json({ message: "User does not exist" });
       return;
     }
     res.status(200).json(user);
@@ -262,8 +304,8 @@ function generateRandomNumber(): string {
 }
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  host: 'smtp.gmail.com',
+  service: "gmail",
+  host: "smtp.gmail.com",
   port: 587,
   secure: false, // Use `true` for port 465, `false` for all other ports
   auth: {
@@ -276,11 +318,11 @@ const transporter = nodemailer.createTransport({
 const sendMail = async (transporter: any, user: any, template: any) => {
   const mailOptions = {
     from: {
-      name: 'Boomers',
+      name: "Boomers",
       address: process.env.USER_EMAIL,
     }, // sender address
     to: [user], // list of receivers
-    subject: 'Verification Code', // Subject line
+    subject: "Verification Code", // Subject line
     html: template,
   };
   try {
