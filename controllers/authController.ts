@@ -10,25 +10,39 @@ import jwt from "jsonwebtoken";
 //access public
 const signInUser = asyncHandler(async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, phoneNumber } = req.body;
 
-    if (!email || !password) {
+    if (!email && !phoneNumber) {
       res.status(400);
-      throw new Error("Please provide both email and password");
+      throw new Error("Please put an email or phone number");
+    }
+    if (!password.trim()) {
+      res.status(400);
+      throw new Error("Please put a password");
     }
 
-    const user = await User.findOne({ email });
+    if (email && phoneNumber) {
+      res.status(400);
+      throw new Error("Please select either email or phone number");
+    }
 
-    if (!user) {
+    let user;
+    if (email) {
+      user = await User.findOne({ email });
+    } else {
+      user = await User.findOne({ phoneNumber });
+    }
+
+    if (!user || !user.isVerified) {
       res.status(401);
-      throw new Error("Invalid email or password");
+      throw new Error("Invalid email/phone or password");
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
       res.status(401);
-      throw new Error("Invalid email or password");
+      throw new Error("Invalid email/phone or password");
     }
 
     // Generate Auth Code
@@ -55,16 +69,21 @@ const signInUser = asyncHandler(async (req: Request, res: Response) => {
 export const verifyUserCode = asyncHandler(
   async (req: Request, res: Response) => {
     try {
-      const { email, authCode } = req.body;
+      const { email, authCode, phoneNumber } = req.body;
 
-      if (!email || !authCode) {
+      if ((!email && !authCode) || (!phoneNumber && !authCode)) {
         res
           .status(400)
           .json({ message: "Please provide both email and verification code" });
         return;
       }
 
-      const user = await User.findOne({ email });
+      let user;
+      if (email) {
+        user = await User.findOne({ email });
+      } else {
+        user = await User.findOne({ phoneNumber });
+      }
 
       if (!user) {
         res.status(401).json({ message: "User not found" });
@@ -85,7 +104,6 @@ export const verifyUserCode = asyncHandler(
       const currentDate: any = new Date();
       const diffTime = Math.abs(createdDate - currentDate);
       const fiveminutes = 1000 * 60 * 5;
-      console.log(createdDate);
       if (diffTime > fiveminutes) {
         await UserLoginCode.findByIdAndDelete(signInAuthCode._id);
         res.status(400).json({ error: "Authentication code expired" });
