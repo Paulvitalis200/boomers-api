@@ -1,10 +1,10 @@
-import { Schema, model } from 'mongoose';
+import { Schema, model } from "mongoose";
 
 interface IUserVerificationCode {
   userId: string;
   email?: string;
   code: string;
-  signinCode: string;
+  phoneNumber: string;
 }
 
 const userVerificationCodeSchema = new Schema<IUserVerificationCode>(
@@ -15,10 +15,10 @@ const userVerificationCodeSchema = new Schema<IUserVerificationCode>(
     email: {
       type: String,
     },
-    code: {
+    phoneNumber: {
       type: String,
     },
-    signinCode: {
+    code: {
       type: String,
     },
   },
@@ -28,7 +28,7 @@ const userVerificationCodeSchema = new Schema<IUserVerificationCode>(
 );
 
 const UserVerificationCode = model<IUserVerificationCode>(
-  'UserVerificationCode',
+  "UserVerificationCode",
   userVerificationCodeSchema
 );
 
