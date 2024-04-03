@@ -146,10 +146,12 @@ export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
         return;
       }
     }
+
     const isCorrect = await bcrypt.compare(
       verificationCode.toString(),
       hashedVerificationCode.code
     );
+
     const createdDate: any = hashedVerificationCode._id.getTimestamp();
     const currentDate: any = new Date();
     const diffTime = Math.abs(createdDate - currentDate);
