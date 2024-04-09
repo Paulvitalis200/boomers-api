@@ -33,9 +33,56 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
       throw new Error("User profile not found");
     }
 
+    const { phoneNumber, firstName, lastName, bio, interests, username } =
+      req.body;
+    let updateProfileBody = {
+      phoneNumber: profile.phoneNumber,
+      firstName: profile.firstName,
+      lastName: profile.lastName,
+      bio: profile.bio,
+      interests: profile.interests,
+      username: profile.username,
+    };
+
+    if (username && username.trim().length > 0)
+      updateProfileBody.username = username.trim();
+
+    if (phoneNumber && phoneNumber.trim().length > 0)
+      updateProfileBody.phoneNumber = phoneNumber.trim();
+
+    if (firstName && firstName.trim().length > 0)
+      updateProfileBody.firstName = firstName.trim();
+
+    if (lastName && lastName.trim().length > 0)
+      updateProfileBody.lastName = lastName.trim();
+
+    if (bio && bio.trim().length > 0) updateProfileBody.bio = bio.trim();
+
+    if (interests && typeof interests === "object")
+      updateProfileBody.interests = interests;
+
+    if (
+      !interests &&
+      !phoneNumber &&
+      !firstName &&
+      !lastName &&
+      !bio &&
+      !username
+    ) {
+      res.status(400);
+      throw new Error("Please put a valid value");
+    }
+
     const updatedProfile = await UserProfile.findByIdAndUpdate(
       profile._id,
-      req.body,
+      {
+        firstName: updateProfileBody.firstName,
+        lastName: updateProfileBody.lastName,
+        phoneNumber: updateProfileBody.phoneNumber,
+        bio: updateProfileBody.bio,
+        interests: updateProfileBody.interests,
+        username: updateProfileBody.username,
+      },
       {
         new: true,
       }
