@@ -7,11 +7,17 @@ interface IUserProfile {
   firstName: string;
   lastName: string;
   bio: string;
+  interests: any;
+  username: string;
 }
 
 const userProfileSchema = new Schema<IUserProfile>(
   {
     userId: {
+      type: String,
+      unique: true,
+    },
+    username: {
       type: String,
       unique: true,
     },
@@ -33,6 +39,10 @@ const userProfileSchema = new Schema<IUserProfile>(
     },
     bio: {
       type: String,
+      default: null,
+    },
+    interests: {
+      type: Array,
       default: null,
     },
   },
