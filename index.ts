@@ -10,6 +10,7 @@ import dotenv from "dotenv";
 const cookieSession = require("cookie-session");
 require("./config/passport-setup");
 import userProfileRouter from "./routes/userProfileRoutes";
+import teamRouter from "./routes/team/teamRoutes";
 
 dotenv.config();
 
@@ -43,6 +44,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(userRouter);
 app.use("/api/users", [userRouter, userProfileRouter]);
+app.use("/api/teams", teamRouter);
 app.use(errorHandler);
 app.disable("x-powered-by"); // less hackers know about our stack
 
