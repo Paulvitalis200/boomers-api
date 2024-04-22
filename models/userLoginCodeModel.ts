@@ -4,7 +4,7 @@ interface IUserCode {
   userId: string;
   email?: string;
   code: string;
-  signinCode: string;
+  logInCode: string;
 }
 
 const userLoginCodeSchema = new Schema<IUserCode>(
@@ -18,7 +18,7 @@ const userLoginCodeSchema = new Schema<IUserCode>(
     code: {
       type: String,
     },
-    signinCode: {
+    logInCode: {
       type: String,
     },
   },

@@ -297,6 +297,14 @@ export const getUsers = asyncHandler(async (req: Request, res: Response) => {
   res.status(200).json(users);
 });
 
+//@desc Get current user info
+//@route GET /api/users/current
+//access public
+export const currentUser = asyncHandler(async (req: Request, res: Response) => {
+  const users = await User.find({});
+  res.status(200).json(users);
+});
+
 function generateRandomNumber(): string {
   const min = 100000;
   const max = 999999;
