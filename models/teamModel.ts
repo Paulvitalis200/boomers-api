@@ -1,7 +1,7 @@
-import { Schema, model } from "mongoose";
+import mongoose, { Schema, model } from "mongoose";
 
 interface ITeam {
-  owner: any;
+  owner_id: any;
   name: string;
   category: any;
   isActive: boolean;
@@ -11,8 +11,10 @@ interface ITeam {
 
 const teamSchema = new Schema<ITeam>(
   {
-    owner: {
-      type: String,
+    owner_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: "User",
     },
     name: {
       type: String,

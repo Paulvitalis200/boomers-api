@@ -6,8 +6,11 @@ import {
   getTeam,
   updateTeam,
 } from "../../controllers/team/teamController";
+import validateToken from "../../middleware/validateTokenHandler";
 
 const teamRouter = express.Router();
+
+teamRouter.use(validateToken);
 
 /**
  * @openapi

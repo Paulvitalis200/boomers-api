@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+import mongoose, { Schema, model } from "mongoose";
 
 interface IUserProfile {
   userId: string;
@@ -9,13 +9,15 @@ interface IUserProfile {
   bio: string;
   interests: any;
   username: string;
+  user_id: any;
 }
 
 const userProfileSchema = new Schema<IUserProfile>(
   {
-    userId: {
-      type: String,
-      unique: true,
+    user_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: "User",
     },
     username: {
       type: String,
