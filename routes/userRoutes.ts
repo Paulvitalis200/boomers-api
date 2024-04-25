@@ -203,26 +203,7 @@ userRouter.post("/resend-verification", resendVerificationCode);
  *      500:
  *        description: Server Error
  */
-userRouter.get("/", getUsers);
-
-/**
- * @openapi
- * '/api/users/:id':
- *  post:
- *     tags:
- *     - User Controller
- *     summary: Returns one user
- *     responses:
- *      200:
- *        description: Success
- *      400:
- *        description: Bad Request
- *      404:
- *        description: Not Found
- *      500:
- *        description: Server Error
- */
-userRouter.get("/:id", getUser);
+userRouter.get("/", validateToken, getUsers);
 
 /**
  * @openapi
@@ -243,6 +224,25 @@ userRouter.get("/:id", getUser);
  *      500:
  *        description: Server Error
  */
-userRouter.get("/current", currentUser, validateToken);
+userRouter.get("/current", validateToken, currentUser);
+
+/**
+ * @openapi
+ * '/api/users/:id':
+ *  post:
+ *     tags:
+ *     - User Controller
+ *     summary: Returns one user
+ *     responses:
+ *      200:
+ *        description: Success
+ *      400:
+ *        description: Bad Request
+ *      404:
+ *        description: Not Found
+ *      500:
+ *        description: Server Error
+ */
+userRouter.get("/:id", getUser);
 
 export default userRouter;

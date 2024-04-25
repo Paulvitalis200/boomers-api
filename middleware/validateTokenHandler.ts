@@ -2,10 +2,12 @@ import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 
 import jwt from "jsonwebtoken";
+export interface CustomRequest extends Request {
+  user?: any;
+}
 
 const validateToken = asyncHandler(
-  async (req: Request, res: Response, next) => {
-    console.log("VALIDATING");
+  async (req: CustomRequest, res: Response, next) => {
     let token;
     let authHeader: any =
       req.headers.Authorization || req.headers.authorization;
@@ -20,15 +22,16 @@ const validateToken = asyncHandler(
             res.status(401);
             throw new Error("User is not authorized");
           }
-          //   req.user = decoded.user;
+          req.user = decoded.user;
           console.log(decoded);
-          //   next();
+          next();
         }
       );
-      //   if (!token) {
-      //     res.status(404);
-      //     throw new Error("User is not authorized or token is missing");
-      //   }
+    }
+
+    if (!token) {
+      res.status(404);
+      throw new Error("User is not authorized or token is missing");
     }
   }
 );

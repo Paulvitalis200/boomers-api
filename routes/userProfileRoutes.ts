@@ -3,8 +3,11 @@ import {
   getProfile,
   updateUserProfile,
 } from "../controllers/userProfileController";
+import validateToken from "../middleware/validateTokenHandler";
 
 const userProfileRouter = express.Router();
+
+userProfileRouter.use(validateToken);
 /**
  * @openapi
  * '/api/users/:id/profile':

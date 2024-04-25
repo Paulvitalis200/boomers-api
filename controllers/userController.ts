@@ -7,6 +7,7 @@ import UserVerificationCode from "../models/userVerificationCodeModel";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 import UserProfile from "../models/userProfileModel";
+import { CustomRequest } from "../middleware/validateTokenHandler";
 
 dotenv.config();
 
@@ -182,9 +183,9 @@ export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
             sendMail(transporter, email, emailTemplate);
           }
           await UserProfile.create({
-            userId: user?._id,
             email,
             phoneNumber,
+            user_id: user?.id,
           });
           res.status(200).json({ successful: true, message: "User verified!" });
         }
@@ -300,9 +301,11 @@ export const getUsers = asyncHandler(async (req: Request, res: Response) => {
 //@desc Get current user info
 //@route GET /api/users
 //access private
-export const currentUser = asyncHandler(async (req, res) => {
-  res.json(req.user);
-});
+export const currentUser = asyncHandler(
+  async (req: CustomRequest, res: Response) => {
+    res.json(req.user);
+  }
+);
 
 function generateRandomNumber(): string {
   const min = 100000;

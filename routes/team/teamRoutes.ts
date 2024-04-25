@@ -6,8 +6,11 @@ import {
   getTeam,
   updateTeam,
 } from "../../controllers/team/teamController";
+import validateToken from "../../middleware/validateTokenHandler";
 
 const teamRouter = express.Router();
+
+teamRouter.use(validateToken);
 
 /**
  * @openapi
@@ -18,6 +21,14 @@ const teamRouter = express.Router();
  *     summary: Create a team
  *     requestBody:
  *      required: true
+ *     components:
+ *      securitySchemes:
+ *      bearerAuth:            # arbitrary name for the security scheme
+ *      type: http
+ *      scheme: bearer
+ *      bearerFormat: JWT    # optional, arbitrary value for documentation purposes
+ *     security:
+ *      - bearerAuth: []
  *      content:
  *        application/json:
  *           schema:
@@ -57,10 +68,18 @@ teamRouter.post("/", createTeam);
 /**
  * @openapi
  * '/api/teams':
- *  post:
+ *  get:
  *     tags:
  *     - Team Controller
  *     summary: Get all teams
+ *     components:
+ *      securitySchemes:
+ *      bearerAuth:            # arbitrary name for the security scheme
+ *      type: http
+ *      scheme: bearer
+ *      bearerFormat: JWT    # optional, arbitrary value for documentation purposes
+ *     security:
+ *      - bearerAuth: []
  *     requestBody:
  *      required: false
  *     responses:
