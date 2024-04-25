@@ -21,14 +21,6 @@ teamRouter.use(validateToken);
  *     summary: Create a team
  *     requestBody:
  *      required: true
- *     components:
- *      securitySchemes:
- *      bearerAuth:            # arbitrary name for the security scheme
- *      type: http
- *      scheme: bearer
- *      bearerFormat: JWT    # optional, arbitrary value for documentation purposes
- *     security:
- *      - bearerAuth: []
  *      content:
  *        application/json:
  *           schema:
@@ -68,18 +60,10 @@ teamRouter.post("/", createTeam);
 /**
  * @openapi
  * '/api/teams':
- *  get:
+ *  post:
  *     tags:
  *     - Team Controller
  *     summary: Get all teams
- *     components:
- *      securitySchemes:
- *      bearerAuth:            # arbitrary name for the security scheme
- *      type: http
- *      scheme: bearer
- *      bearerFormat: JWT    # optional, arbitrary value for documentation purposes
- *     security:
- *      - bearerAuth: []
  *     requestBody:
  *      required: false
  *     responses:
