@@ -4,11 +4,13 @@ import asyncHandler from "express-async-handler";
 import User from "../models/userModel";
 import UserLoginCode from "../models/userLoginCodeModel";
 import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
 
+dotenv.config();
 //@desc Sign in a user
-//@route POST /api/users/signin
+//@route POST /api/users/login
 //access public
-const signInUser = asyncHandler(async (req: Request, res: Response) => {
+const logInUser = asyncHandler(async (req: Request, res: Response) => {
   try {
     const { email, password, phoneNumber } = req.body;
 
@@ -54,10 +56,10 @@ const signInUser = asyncHandler(async (req: Request, res: Response) => {
     // Store the hashed authentication code in the database
     await UserLoginCode.create({
       userId: user._id,
-      signinCode: hashedAuthCode,
+      logInCode: hashedAuthCode,
     });
 
-    res.status(200).json({ message: "Sign in successful", authCode });
+    res.status(200).json({ message: "Log in successful", authCode });
   } catch (error: any) {
     throw new Error(error);
   }
@@ -90,22 +92,22 @@ export const verifyUserCode = asyncHandler(
         return;
       }
 
-      const signInAuthCode = await UserLoginCode.findOne({
+      const logInAuthCode = await UserLoginCode.findOne({
         userId: user._id,
       });
 
-      if (!signInAuthCode) {
+      if (!logInAuthCode) {
         res.status(400).json({ message: "No authentication code found" });
         return;
       }
 
       // Check if the code has expired
-      const createdDate: any = signInAuthCode._id.getTimestamp();
+      const createdDate: any = logInAuthCode._id.getTimestamp();
       const currentDate: any = new Date();
       const diffTime = Math.abs(createdDate - currentDate);
       const fiveminutes = 1000 * 60 * 5;
       if (diffTime > fiveminutes) {
-        await UserLoginCode.findByIdAndDelete(signInAuthCode._id);
+        await UserLoginCode.findByIdAndDelete(logInAuthCode._id);
         res.status(400).json({ error: "Authentication code expired" });
         return;
       }
@@ -113,7 +115,7 @@ export const verifyUserCode = asyncHandler(
       // Compare the entered code with the hashed code retrieved from the database
       const isCodeValid = await bcrypt.compare(
         authCode,
-        signInAuthCode.signinCode
+        logInAuthCode.logInCode
       );
 
       if (!isCodeValid) {
@@ -125,9 +127,18 @@ export const verifyUserCode = asyncHandler(
       await UserLoginCode.deleteOne({ userId: user._id });
 
       // Create a JWT token with an expiration time of 1 hour
-      const token = jwt.sign({ userId: user._id }, "token_secret", {
-        expiresIn: "1h",
-      });
+      const token = jwt.sign(
+        {
+          user: {
+            email: user.email,
+            id: user._id,
+          },
+        },
+        process.env.ACCESS_TOKEN_SECRET!,
+        {
+          expiresIn: "1h",
+        }
+      );
 
       res.status(200).json({ message: "Code verified successfully", token });
     } catch (error: any) {
@@ -141,4 +152,4 @@ const generateAuthCode = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-export default signInUser;
+export default logInUser;
