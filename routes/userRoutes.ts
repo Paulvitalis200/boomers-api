@@ -243,6 +243,6 @@ userRouter.get("/:id", getUser);
  *      500:
  *        description: Server Error
  */
-userRouter.get("/current", currentUser);
+userRouter.get("/current", currentUser, validateToken);
 
 export default userRouter;
