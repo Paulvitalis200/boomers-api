@@ -1,11 +1,13 @@
-import express from 'express';
+import express from "express";
 import registerUser, {
+  currentUser,
   getUser,
   getUsers,
   resendVerificationCode,
   verifyUser,
-} from '../controllers/userController';
-import signInUser, { verifyUserCode } from '../controllers/authController';
+} from "../controllers/userController";
+import logInUser, { verifyUserCode } from "../controllers/authController";
+import validateToken from "../middleware/validateTokenHandler";
 
 const userRouter = express.Router();
 
@@ -44,15 +46,15 @@ const userRouter = express.Router();
  *      500:
  *        description: Server Error
  */
-userRouter.post('/register', registerUser);
+userRouter.post("/register", registerUser);
 
 /**
  * @openapi
- * '/api/users/signin':
+ * '/api/users/login':
  *  post:
  *     tags:
  *     - User Controller
- *     summary: Sign in a user
+ *     summary: Login a user
  *     requestBody:
  *      required: true
  *      content:
@@ -81,11 +83,11 @@ userRouter.post('/register', registerUser);
  *      500:
  *        description: Server Error
  */
-userRouter.post('/signin', signInUser);
+userRouter.post("/login", logInUser);
 
 /**
  * @openapi
- * '/api/users/verify-code':
+ * '/api/users/verify-login':
  *  post:
  *     tags:
  *     - User Controller
@@ -116,7 +118,7 @@ userRouter.post('/signin', signInUser);
  *      500:
  *        description: Server Error
  */
-userRouter.post('/verify-code', verifyUserCode);
+userRouter.post("/verify-login", verifyUserCode);
 
 /**
  * @openapi
@@ -151,7 +153,7 @@ userRouter.post('/verify-code', verifyUserCode);
  *      500:
  *        description: Server Error
  */
-userRouter.post('/verify', verifyUser);
+userRouter.post("/verify", verifyUser);
 
 /**
  * @openapi
@@ -182,7 +184,7 @@ userRouter.post('/verify', verifyUser);
  *      500:
  *        description: Server Error
  */
-userRouter.post('/resend-verification', resendVerificationCode);
+userRouter.post("/resend-verification", resendVerificationCode);
 
 /**
  * @openapi
@@ -201,7 +203,28 @@ userRouter.post('/resend-verification', resendVerificationCode);
  *      500:
  *        description: Server Error
  */
-userRouter.get("/", getUsers);
+userRouter.get("/", validateToken, getUsers);
+
+/**
+ * @openapi
+ * '/api/users/current':
+ *  get:
+ *     tags:
+ *     - User Controller
+ *     summary: Returns current user
+ *     responses:
+ *      200:
+ *        description: Success
+ *      400:
+ *        description: Bad Request
+ *      401:
+ *        description: User is not Authorized
+ *      404:
+ *        description: Not Found
+ *      500:
+ *        description: Server Error
+ */
+userRouter.get("/current", validateToken, currentUser);
 
 /**
  * @openapi
@@ -220,6 +243,6 @@ userRouter.get("/", getUsers);
  *      500:
  *        description: Server Error
  */
-userRouter.get("/:id", getUser);
+userRouter.get("/:id", validateToken, getUser);
 
 export default userRouter;
