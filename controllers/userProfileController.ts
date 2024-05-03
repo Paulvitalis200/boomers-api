@@ -33,19 +33,17 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
       throw new Error("User profile not found");
     }
 
-    const { phoneNumber, firstName, lastName, bio, interests, username } =
-      req.body;
+    const { phoneNumber, firstName, lastName, bio, interests } = req.body;
     let updateProfileBody = {
       phoneNumber: profile.phoneNumber,
       firstName: profile.firstName,
       lastName: profile.lastName,
       bio: profile.bio,
       interests: profile.interests,
-      username: profile.username,
     };
 
-    if (username && username.trim().length > 0)
-      updateProfileBody.username = username.trim();
+    // if (username && username.trim().length > 0)
+    //   updateProfileBody.username = username.trim();
 
     if (phoneNumber && phoneNumber.trim().length > 0)
       updateProfileBody.phoneNumber = phoneNumber.trim();
@@ -61,14 +59,7 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
     if (interests && typeof interests === "object")
       updateProfileBody.interests = interests;
 
-    if (
-      !interests &&
-      !phoneNumber &&
-      !firstName &&
-      !lastName &&
-      !bio &&
-      !username
-    ) {
+    if (!interests && !phoneNumber && !firstName && !lastName && !bio) {
       res.status(400);
       throw new Error("Please put a valid value");
     }
@@ -81,7 +72,6 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
         phoneNumber: updateProfileBody.phoneNumber,
         bio: updateProfileBody.bio,
         interests: updateProfileBody.interests,
-        username: updateProfileBody.username,
       },
       {
         new: true,

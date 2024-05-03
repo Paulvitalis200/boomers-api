@@ -8,7 +8,6 @@ interface IUserProfile {
   lastName: string;
   bio: string;
   interests: any;
-  username: string;
   user_id: any;
 }
 
@@ -18,10 +17,6 @@ const userProfileSchema = new Schema<IUserProfile>(
       type: mongoose.Schema.Types.ObjectId,
       required: true,
       ref: "User",
-    },
-    username: {
-      type: String,
-      unique: true,
     },
     email: {
       type: String,
