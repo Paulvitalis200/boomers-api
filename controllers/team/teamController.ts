@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import Team from "../../models/teamModel";
-import User from "../../models/userModel";
 import { CustomRequest } from "../../middleware/validateTokenHandler";
 
 //@desc Create team
@@ -28,7 +27,7 @@ export const createTeam = asyncHandler(
         category,
         audience,
         teamUsername,
-        owner: req.user.id,
+        owner_id: req.user.id,
       });
 
       res.status(201).json({ message: "successful", data: team });
