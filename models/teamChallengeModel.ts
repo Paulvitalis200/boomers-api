@@ -18,12 +18,13 @@ Best answer
 Completion
 Reward
 Image
+is_valid
 
  */
 interface ITeamChallenge {
   owner_id: any;
   team_id: any;
-  name: string;
+  challenge_name: string;
   due_date: Date;
   difficulty: number;
   description: string;
@@ -34,6 +35,7 @@ interface ITeamChallenge {
   completion: string;
   reward: string;
   image_url: string;
+  valid: boolean;
 }
 
 const teamChallengeSchema = new Schema<ITeamChallenge>(
@@ -47,7 +49,7 @@ const teamChallengeSchema = new Schema<ITeamChallenge>(
       type: mongoose.Schema.Types.ObjectId,
       required: true,
     },
-    name: {
+    challenge_name: {
       type: String,
       required: true,
     },
@@ -94,6 +96,10 @@ const teamChallengeSchema = new Schema<ITeamChallenge>(
     },
     image_url: {
       type: String,
+    },
+    valid: {
+      type: Boolean,
+      default: false,
     },
   },
   {
