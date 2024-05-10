@@ -1,5 +1,5 @@
-import { Request, Response } from 'express';
-import { constants } from '../constants';
+import { Request, Response } from "express";
+import { constants } from "../constants";
 
 export const errorHandler = (
   err: any,
@@ -11,48 +11,48 @@ export const errorHandler = (
   switch (statusCode) {
     case constants.VALIDATION_ERROR:
       res.json({
-        title: 'Validation Failed',
+        title: "Validation Failed",
         message: err.message,
         stackTrace: err.stack,
       });
       break;
     case constants.CONFLICT:
       res.json({
-        title: 'Conflict',
+        title: "Conflict",
         message: err.message,
         stackTrace: err.stack,
       });
       break;
     case constants.NOT_FOUND:
       res.json({
-        title: 'Not Found',
+        title: "Not Found",
         message: err.message,
         stackTrace: err.stack,
       });
       break;
     case constants.UNAUTHORIZED:
       res.json({
-        title: 'Unauthorized',
+        title: "Unauthorized",
         message: err.message,
         stackTrace: err.stack,
       });
       break;
     case constants.FORBIDDEN:
       res.json({
-        title: 'Validation failed',
+        title: "Validation failed",
         message: err.message,
         stackTrace: err.stack,
       });
       break;
     case constants.SERVER_ERROR:
       res.json({
-        title: 'Server Error',
+        title: "Server Error",
         message: err.message,
         stackTrace: err.stack,
       });
       break;
     default:
-      console.log('no error. All good!');
+      console.log("no error. All good!");
       break;
   }
 };
