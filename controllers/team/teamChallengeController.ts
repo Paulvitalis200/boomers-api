@@ -1,4 +1,4 @@
-import e, { Request, Response } from "express";
+import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import Team from "../../models/teamModel";
 import { CustomRequest } from "../../middleware/validateTokenHandler";
@@ -183,12 +183,10 @@ export const deleteIndividualTeamChallenge = asyncHandler(
             const challenge = await TeamChallenge.deleteOne({
               _id: req.params.challengeId,
             });
-            res
-              .status(204)
-              .json({
-                message: "Challenge deleted successfully",
-                data: challenge,
-              });
+            res.status(204).json({
+              message: "Challenge deleted successfully",
+              data: challenge,
+            });
           }
         }
       }

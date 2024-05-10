@@ -52,7 +52,7 @@ export const errorHandler = (
       });
       break;
     default:
-      console.log(err.message);
+      console.log("no error. All good!");
       break;
   }
 };
