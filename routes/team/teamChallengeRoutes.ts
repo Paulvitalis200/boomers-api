@@ -4,6 +4,7 @@ import validateToken from "../../middleware/validateTokenHandler";
 
 import {
   createTeamChallenge,
+  deleteIndividualTeamChallenge,
   getAllTeamChallenges,
   getIndividualTeamChallenge,
   updateIndividualTeamChallenge,
@@ -167,4 +168,29 @@ teamChallengeRouter.put(
   updateIndividualTeamChallenge
 );
 
+/**
+ * @openapi
+ * '/api/team/:id/challenges':
+ *  put:
+ *     tags:
+ *     - Team Challenge Controller
+ *     summary: Delete Team Challenge
+ *     responses:
+ *      204:
+ *        description: Deleted
+ *      400:
+ *        description: Bad Request
+ *      403:
+ *        description: Forbidden
+ *      409:
+ *        description: Conflict
+ *      404:
+ *        description: Not Found
+ *      500:
+ *        description: Server Error
+ */
+teamChallengeRouter.delete(
+  "/:teamId/challenges/:challengeId",
+  deleteIndividualTeamChallenge
+);
 export default teamChallengeRouter;

@@ -158,3 +158,42 @@ export const updateIndividualTeamChallenge = asyncHandler(
     }
   }
 );
+
+//@desc Delete Individual Team Challenge
+//@route DELETE /api/teams/:id/challenges/:challengeId
+//access private
+export const deleteIndividualTeamChallenge = asyncHandler(
+  async (req: CustomRequest, res: Response) => {
+    try {
+      const team = await Team.findById({ _id: req.params.teamId });
+
+      if (!team) {
+        res.status(404).json({ message: "Team not found" });
+      } else {
+        if (req.user.id !== team.owner_id.toString()) {
+          res.status(403).json({ message: "User does not own the team" });
+        } else {
+          const challenge = await TeamChallenge.findById({
+            _id: req.params.challengeId,
+          });
+          if (!challenge) {
+            res.status(404).json({ message: "Challenge not found" });
+          } else {
+            // Delete the authentication code from the database
+            const challenge = await TeamChallenge.deleteOne({
+              _id: req.params.challengeId,
+            });
+            res
+              .status(204)
+              .json({
+                message: "Challenge deleted successfully",
+                data: challenge,
+              });
+          }
+        }
+      }
+    } catch (error: any) {
+      console.log(error);
+    }
+  }
+);
