@@ -10,6 +10,7 @@ import userProfileRouter from "./routes/userProfileRoutes";
 import teamRouter from "./routes/team/teamRoutes";
 import teamMemberRouter from "./routes/team/teamMemberRoutes";
 import teamChallengeRouter from "./routes/team/teamChallengeRoutes";
+import challengeRouter from "./routes/challenges/challengeRoutes";
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ app.use(express.json());
 app.use("/api/users", [userRouter, userProfileRouter]);
 app.use("/api/teams", [teamRouter, teamChallengeRouter]);
 app.use("/api/team-member", teamMemberRouter);
+app.use("/api/challenges", challengeRouter);
 app.use(errorHandler);
 app.disable("x-powered-by"); // less hackers know about our stack
 

@@ -26,7 +26,7 @@ const options = {
     ],
   },
   // looks for configuration in specified directories
-  apis: ["./routes/*.ts", "./routes/team/*.ts"],
+  apis: ["./routes/*.ts", "./routes/team/*.ts", "./routes/challenges/*.ts"],
 };
 const swaggerSpec = swaggerJsdoc(options);
 function swaggerDocs(app: any, port: any) {
