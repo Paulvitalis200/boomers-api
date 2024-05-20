@@ -18,7 +18,7 @@ dotenv.config();
 //access public
 const registerUser = asyncHandler(async (req: Request, res: Response) => {
   try {
-    const { phoneNumber, email, password } = req.body;
+    const { phoneNumber, email, password, username } = req.body;
     if (!email && !phoneNumber) {
       res.status(400);
       throw new Error("Please put an email or phone number");
@@ -33,20 +33,26 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
       throw new Error("Please select either email or phone number");
     }
 
-    let userAvailable;
-    if (email) {
+    if (!username.trim()) {
+      res.status(400);
+      throw new Error("Please put a username");
+    }
+    let userAvailable: any = [];
+    if (email && username) {
       const isValid = EmailValidator.validate(email);
 
       if (!isValid) {
         res.status(400);
         throw new Error("Email is not valid");
       }
-      userAvailable = await User.findOne({ email });
+      userAvailable = await User.find({
+        email,
+      });
     }
 
-    if (phoneNumber) {
-      userAvailable = await User.findOne({ phoneNumber });
-    }
+    // if (phoneNumber) {
+    //   userAvailable = await User.findOne({ phoneNumber });
+    // }
 
     const regexPattern =
       /^(?=.*[-\#\$\.\%\&\@\!\+\=\<\>\*])(?=.*[a-zA-Z])(?=.*\d).{8,}$/;
@@ -61,7 +67,8 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
 
     const hashPassword = await bcrypt.hash(password.trim(), 10);
 
-    if (userAvailable) {
+    console.log("USERAVAILABLE: ", userAvailable);
+    if (userAvailable.length > 0) {
       res.status(409);
       throw new Error("User already registered!");
     }
@@ -70,6 +77,7 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
       password: hashPassword,
       email,
       phoneNumber,
+      username: username.trim(),
     });
 
     if (user) {
@@ -89,7 +97,7 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
       });
       if (email) {
         const emailTemplate = `<div>
-        <p>Hi,</p>
+        <p>Hi ${username.trim()},</p>
         <p>Thank you for signing up to Boomers.</p>
         <p>Your verification code is: </p>
         <h2>${unhashedCode}</h2>
@@ -184,11 +192,18 @@ export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
           </div>`;
             sendMail(transporter, email, emailTemplate);
           }
-          await UserProfile.create({
+          const userProfile = await UserProfile.create({
             email,
             phoneNumber,
             user_id: user?.id,
+            username: user?.username,
           });
+
+          if (userProfile) {
+            await User.findByIdAndUpdate(user?._id, {
+              profile: userProfile._id,
+            });
+          }
           res.status(200).json({ successful: true, message: "User verified!" });
         }
       } else {

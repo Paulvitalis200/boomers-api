@@ -5,6 +5,8 @@ interface IUser {
   phoneNumber?: string;
   password: string;
   isVerified: boolean;
+  profile: Schema.Types.ObjectId;
+  username: string;
 }
 
 const userSchema = new Schema<IUser>(
@@ -24,6 +26,14 @@ const userSchema = new Schema<IUser>(
     isVerified: {
       type: Boolean,
       default: false,
+    },
+    profile: {
+      type: Schema.Types.ObjectId,
+      default: null,
+    },
+    username: {
+      type: String,
+      required: true,
     },
   },
   {

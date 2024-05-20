@@ -9,6 +9,8 @@ interface IUserProfile {
   bio: string;
   interests: any;
   user_id: any;
+  username: string;
+  gender: string;
 }
 
 const userProfileSchema = new Schema<IUserProfile>(
@@ -40,6 +42,14 @@ const userProfileSchema = new Schema<IUserProfile>(
     },
     interests: {
       type: Array,
+      default: null,
+    },
+    username: {
+      type: String,
+      default: null,
+    },
+    gender: {
+      type: String,
       default: null,
     },
   },
