@@ -1,9 +1,11 @@
 import express from "express";
 import registerUser, {
   currentUser,
+  forgotPassword,
   getUser,
   getUsers,
   resendVerificationCode,
+  resetPassword,
   verifyUser,
 } from "../controllers/userController";
 import logInUser, { verifyUserCode } from "../controllers/authController";
@@ -244,5 +246,78 @@ userRouter.get("/current", validateToken, currentUser);
  *        description: Server Error
  */
 userRouter.get("/:id", validateToken, getUser);
+
+/**
+ * @openapi
+ * '/api/users/forgot-password':
+ *  post:
+ *     tags:
+ *     - User Controller
+ *     summary: Forgot login password
+ *     requestBody:
+ *      required: true
+ *      content:
+ *        application/json:
+ *           schema:
+ *            type: object
+ *            required:
+ *              - email
+ *              - verificationCode
+ *            properties:
+ *              email:
+ *                type: string
+ *                default: johndoe@mail.com
+ *              verificationCode:
+ *                type: string
+ *                default: 433443
+ *     responses:
+ *      200:
+ *        description: Success
+ *      400:
+ *        description: Bad Request
+ *      404:
+ *        description: Not Found
+ *      500:
+ *        description: Server Error
+ */
+userRouter.post("/forgot-password", forgotPassword);
+
+/**
+ * @openapi
+ * '/api/users/reset-password':
+ *   post:
+ *     tags:
+ *       - User Controller
+ *     summary: Reset user password
+ *     description: Reset user password using a password reset token
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - token
+ *               - newPassword
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: User ID
+ *               token:
+ *                 type: string
+ *                 description: Password reset token
+ *               newPassword:
+ *                 type: string
+ *                 description: New password
+ *     responses:
+ *       200:
+ *         description: Password reset successful
+ *       404:
+ *         description: Invalid or expired password reset token
+ *       500:
+ *         description: Internal server error
+ */
+userRouter.post("/reset-password", resetPassword);
 
 export default userRouter;
