@@ -1,10 +1,10 @@
-import { Request, Response } from "express";
-import bcrypt from "bcrypt";
-import asyncHandler from "express-async-handler";
-import User from "../models/userModel";
-import UserLoginCode from "../models/userLoginCodeModel";
-import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
+import { Request, Response } from 'express';
+import bcrypt from 'bcrypt';
+import asyncHandler from 'express-async-handler';
+import User from '../models/userModel';
+import UserLoginCode from '../models/userLoginCodeModel';
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
 
 dotenv.config();
 //@desc Sign in a user
@@ -16,16 +16,16 @@ const logInUser = asyncHandler(async (req: Request, res: Response) => {
 
     if (!email && !phoneNumber) {
       res.status(400);
-      throw new Error("Please put an email or phone number");
+      throw new Error('Please put an email or phone number');
     }
     if (!password.trim()) {
       res.status(400);
-      throw new Error("Please put a password");
+      throw new Error('Please put a password');
     }
 
     if (email && phoneNumber) {
       res.status(400);
-      throw new Error("Please select either email or phone number");
+      throw new Error('Please select either email or phone number');
     }
 
     let user;
@@ -37,14 +37,14 @@ const logInUser = asyncHandler(async (req: Request, res: Response) => {
 
     if (!user || !user.isVerified) {
       res.status(401);
-      throw new Error("Invalid email/phone or password");
+      throw new Error('Invalid email/phone or password');
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
       res.status(401);
-      throw new Error("Invalid email/phone or password");
+      throw new Error('Invalid email/phone or password');
     }
 
     // Generate Auth Code
@@ -59,7 +59,7 @@ const logInUser = asyncHandler(async (req: Request, res: Response) => {
       logInCode: hashedAuthCode,
     });
 
-    res.status(200).json({ message: "Log in successful", authCode });
+    res.status(200).json({ message: 'Log in successful', authCode });
   } catch (error: any) {
     throw new Error(error);
   }
@@ -76,7 +76,7 @@ export const verifyUserCode = asyncHandler(
       if ((!email && !authCode) || (!phoneNumber && !authCode)) {
         res
           .status(400)
-          .json({ message: "Please provide both email and verification code" });
+          .json({ message: 'Please provide both email and verification code' });
         return;
       }
 
@@ -88,7 +88,7 @@ export const verifyUserCode = asyncHandler(
       }
 
       if (!user) {
-        res.status(401).json({ message: "User not found" });
+        res.status(401).json({ message: 'User not found' });
         return;
       }
 
@@ -97,7 +97,7 @@ export const verifyUserCode = asyncHandler(
       });
 
       if (!logInAuthCode) {
-        res.status(400).json({ message: "No authentication code found" });
+        res.status(400).json({ message: 'No authentication code found' });
         return;
       }
 
@@ -108,7 +108,7 @@ export const verifyUserCode = asyncHandler(
       const fiveminutes = 1000 * 60 * 5;
       if (diffTime > fiveminutes) {
         await UserLoginCode.findByIdAndDelete(logInAuthCode._id);
-        res.status(400).json({ error: "Authentication code expired" });
+        res.status(400).json({ error: 'Authentication code expired' });
         return;
       }
 
@@ -119,7 +119,7 @@ export const verifyUserCode = asyncHandler(
       );
 
       if (!isCodeValid) {
-        res.status(400).json({ message: "Incorrect code" });
+        res.status(400).json({ message: 'Incorrect code' });
         return;
       }
 
@@ -136,11 +136,11 @@ export const verifyUserCode = asyncHandler(
         },
         process.env.ACCESS_TOKEN_SECRET!,
         {
-          expiresIn: "1h",
+          expiresIn: '1h',
         }
       );
 
-      res.status(200).json({ message: "Code verified successfully", token });
+      res.status(200).json({ message: 'Code verified successfully', token });
     } catch (error: any) {
       res.status(400).json({ error: error });
     }
