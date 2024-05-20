@@ -27,19 +27,22 @@ export const getProfile = asyncHandler(async (req: Request, res: Response) => {
 //access private
 export const updateUserProfile = asyncHandler(async (req, res) => {
   try {
-    const profile = await UserProfile.findOne({ userId: req.params.id });
+    const profile = await UserProfile.findOne({ user_id: req.params.id });
+    console.log("PROFI:E: ", profile);
     if (!profile) {
       res.status(404);
       throw new Error("User profile not found");
     }
 
-    const { phoneNumber, firstName, lastName, bio, interests } = req.body;
+    const { phoneNumber, firstName, lastName, bio, interests, gender } =
+      req.body;
     let updateProfileBody = {
       phoneNumber: profile.phoneNumber,
       firstName: profile.firstName,
       lastName: profile.lastName,
       bio: profile.bio,
       interests: profile.interests,
+      gender: profile.gender,
     };
 
     // if (username && username.trim().length > 0)
@@ -59,9 +62,32 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
     if (interests && typeof interests === "object")
       updateProfileBody.interests = interests;
 
-    if (!interests && !phoneNumber && !firstName && !lastName && !bio) {
+    if (
+      !interests &&
+      !phoneNumber &&
+      !firstName &&
+      !lastName &&
+      !bio &&
+      !gender
+    ) {
       res.status(400);
       throw new Error("Please put a valid value");
+    }
+
+    if (gender && gender.trim().length > 0) {
+      const genderLower = gender.toLowerCase();
+
+      if (
+        genderLower === "male" ||
+        genderLower === "female" ||
+        genderLower === "other" ||
+        genderLower === "none"
+      ) {
+        updateProfileBody.gender = genderLower;
+      } else {
+        res.status(400);
+        throw new Error("Please put a valid gender");
+      }
     }
 
     const updatedProfile = await UserProfile.findByIdAndUpdate(
@@ -72,6 +98,7 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
         phoneNumber: updateProfileBody.phoneNumber,
         bio: updateProfileBody.bio,
         interests: updateProfileBody.interests,
+        gender: updateProfileBody.gender,
       },
       {
         new: true,
