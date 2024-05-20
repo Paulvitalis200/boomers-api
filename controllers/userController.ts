@@ -45,7 +45,6 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
       }
       userAvailable = await User.find({
         email,
-        username: username.trim(),
       });
     }
 
