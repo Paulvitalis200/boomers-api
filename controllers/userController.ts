@@ -9,8 +9,7 @@ import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 import UserProfile from "../models/userProfileModel";
 import { CustomRequest } from "../middleware/validateTokenHandler";
-import Token from "../models/tokenModel";
-import { Schema } from "mongoose";
+import ResetPasswordToken from "../models/resetPasswordTokenModel";
 
 dotenv.config();
 
@@ -332,14 +331,14 @@ export const forgotPassword = async (req: Request, res: Response) => {
     const hash = await bcrypt.hash(resetToken, salt);
 
     // Save token to the database
-    await new Token({
+    await new ResetPasswordToken({
       userId: user._id,
       token: hash,
       createdAt: Date.now(),
     }).save();
 
     // Send email with the reset link
-    const url = "http://localhost:5000";
+    const url = process.env.PORT;
     const emailTemplate = `
             <div>
                 <h2>Hi ${email}</h2>
@@ -348,7 +347,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
                 <a href="${url}/passwordReset?token=${resetToken}&id=${user._id}">Reset Password</a>
             </div>`;
     // Assuming you have a function sendMail defined somewhere
-    // sendMail(transporter, email, emailTemplate);
+    sendMail(transporter, email, emailTemplate, "Forgot Password");
     res.status(200).json({
       message: "Reset password email sent successfully",
       data: `${url}/passwordReset?token=${resetToken}&id=${user._id}`,
@@ -366,8 +365,10 @@ export const resetPassword = async (req: Request, res: Response) => {
     // Extract userId, token, and newPassword from request body
     const { userId, token, password } = req.body;
 
+    const user = await User.find({ _id: userId });
+
     // Check if the password reset token exists for the user
-    const passwordResetToken = await Token.findOne({ userId });
+    const passwordResetToken = await ResetPasswordToken.findOne({ userId });
     if (!passwordResetToken) {
       return res
         .status(404)
@@ -380,6 +381,17 @@ export const resetPassword = async (req: Request, res: Response) => {
       return res
         .status(404)
         .json({ message: "Invalid or expired password reset token" });
+    }
+
+    const regexPattern =
+      /^(?=.*[-\#\$\.\%\&\@\!\+\=\<\>\*])(?=.*[a-zA-Z])(?=.*\d).{8,}$/;
+
+    if (!password.trim().match(regexPattern)) {
+      res.status(400).json({
+        error:
+          "Password must be 8-15 characters, have at least one alphabet (uppercase or lowercase), have at least one number present and have at least one special character (-,.,@,$,!,%,+,=,<,>,#,?,&)",
+      });
+      return;
     }
 
     // Hash the new password
@@ -395,6 +407,14 @@ export const resetPassword = async (req: Request, res: Response) => {
     // Delete the password reset token
     await passwordResetToken.deleteOne();
 
+    // Send email with the reset link
+    const emailTemplate = `
+             <div>
+                 <h2>Hi ${user[0].email}</h2>
+                 <p>Your password was reset successfully</p>
+             </div>`;
+    // Assuming you have a function sendMail defined somewhere
+    sendMail(transporter, user[0].email, emailTemplate, "Password Reset");
     // Return success response
     res.status(200).json({ message: "Password reset successfully" });
   } catch (error) {
@@ -422,14 +442,19 @@ const transporter = nodemailer.createTransport({
 });
 
 // async..await is not allowed in global scope, must use a wrapper
-const sendMail = async (transporter: any, user: any, template: any) => {
+const sendMail = async (
+  transporter: any,
+  user: any,
+  template: any,
+  subject?: string
+) => {
   const mailOptions = {
     from: {
       name: "Boomers",
       address: process.env.USER_EMAIL,
     }, // sender address
     to: [user], // list of receivers
-    subject: "Verification Code", // Subject line
+    subject: subject ? subject : "Verification Code", // Subject line
     html: template,
   };
   try {

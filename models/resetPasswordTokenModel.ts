@@ -1,4 +1,4 @@
-import { Schema, model } from 'mongoose';
+import { Schema, model } from "mongoose";
 
 interface IToken {
   userId: Schema.Types.ObjectId;
@@ -6,7 +6,7 @@ interface IToken {
   createdAt: Date;
 }
 
-const tokenSchema = new Schema<IToken>({
+const resetPasswordTokenSchema = new Schema<IToken>({
   userId: {
     type: Schema.Types.ObjectId,
     required: true,
@@ -18,10 +18,12 @@ const tokenSchema = new Schema<IToken>({
   createdAt: {
     type: Date,
     default: Date.now,
-    expires: 3600, // this is the expiry time in seconds
   },
 });
 
-const Token = model<IToken>('Token', tokenSchema);
+const ResetPasswordToken = model<IToken>(
+  "ResetPasswordToken",
+  resetPasswordTokenSchema
+);
 
-export default Token;
+export default ResetPasswordToken;
