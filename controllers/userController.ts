@@ -67,7 +67,6 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
 
     const hashPassword = await bcrypt.hash(password.trim(), 10);
 
-    console.log("USERAVAILABLE: ", userAvailable);
     if (userAvailable.length > 0) {
       res.status(409);
       throw new Error("User already registered!");
@@ -153,7 +152,7 @@ export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
         res.status(400).json({ error: "User does not exist." });
         return;
       } else {
-        res.status(400).json({ error: "User already verified." });
+        res.status(400).json({ error: "Verification code expired." });
         return;
       }
     }
