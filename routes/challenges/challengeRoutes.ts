@@ -4,7 +4,11 @@ import {
   getChallenge,
 } from "../../controllers/challengesController";
 import validateToken from "../../middleware/validateTokenHandler";
-import { postSolution } from "../../controllers/challengeSolutionController";
+import {
+  getChallengeSolution,
+  postSolution,
+  updateSolution,
+} from "../../controllers/challengeSolutionController";
 const challengeRouter = express.Router();
 
 challengeRouter.use(validateToken);
@@ -61,9 +65,47 @@ challengeRouter.get("/:id", getChallenge);
  *        description: Bad Request
  *      404:
  *        description: Not Found
+ *      409:
+ *        description: Conflict
  *      500:
  *        description: Server Error
  */
 challengeRouter.post("/:id/solutions", postSolution);
+
+/**
+ * @openapi
+ * '/api/challenges/:id/solutions/:solutionId':
+ *  post:
+ *     tags:
+ *     - Challenge Solution Controller
+ *     summary: Get challenge solution
+ *     responses:
+ *      200:
+ *        description: Success
+ *      404:
+ *        description: Not Found
+ *      500:
+ *        description: Server Error
+ */
+challengeRouter.get("/:id/solutions/:solutionId", getChallengeSolution);
+
+/**
+ * @openapi
+ * '/api/challenges/:id/solutions/:solutionId':
+ *  post:
+ *     tags:
+ *     - Challenge Solution Controller
+ *     summary: Patch challenge solution
+ *     responses:
+ *      200:
+ *        description: Success
+ *      403:
+ *        description: Forbidden
+ *      404:
+ *        description: Not Found
+ *      500:
+ *        description: Server Error
+ */
+challengeRouter.patch("/:id/solutions/:solutionId", updateSolution);
 
 export default challengeRouter;

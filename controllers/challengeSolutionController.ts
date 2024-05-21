@@ -38,17 +38,14 @@ export const postSolution = asyncHandler(
       if (!teamMemberExists) {
         res.status(401).json({ message: "User does not belong to the team" });
       } else {
-        console.log("CHALLENGE ID: ", challenge_id);
         const solutionExists = await ChallengeSolution.find({
           challenge_id: challenge_id,
         });
 
-        console.log("SOLUTION EXISTS: ", solutionExists);
         const userSolution = solutionExists.find((solution) => {
           return solution.user_id.toString() === req.user.id;
         });
 
-        console.log("USER SOLUTION: ", userSolution);
         if (!userSolution) {
           const challengeSolution = await ChallengeSolution.create({
             challenge_id: challenge_id,
@@ -66,6 +63,43 @@ export const postSolution = asyncHandler(
       }
     } catch (error: any) {
       console.log(error);
+    }
+  }
+);
+
+//@desc PATCH Solution
+//@route PATCH /api/challenges/:id/solutions/:solutionId
+//access private
+export const updateSolution = asyncHandler(
+  async (req: CustomRequest, res: Response) => {
+    try {
+      const solutionId = req.params.solutionId;
+      const solution = await ChallengeSolution.findById({ _id: solutionId });
+
+      if (req.user.id !== solution?.user_id.toString()) {
+        res.status(403).json({ error: "Solution does not belong to you" });
+      } else {
+        res.status(200).json({ message: "successful", data: solution });
+      }
+    } catch (error: any) {
+      console.log("ERRROR: ", error);
+    }
+  }
+);
+
+//@desc Get Solution
+//@route GET /api/challenges/:id/solutions/:solutionId
+//access private
+export const getChallengeSolution = asyncHandler(
+  async (req: CustomRequest, res: Response) => {
+    try {
+      const solutionId = req.params.solutionId;
+
+      const solution = await ChallengeSolution.findById({ _id: solutionId });
+
+      res.status(200).json({ message: "successful", data: solution });
+    } catch (error: any) {
+      console.log("ERRROR: ", error);
     }
   }
 );
