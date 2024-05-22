@@ -103,3 +103,22 @@ export const getChallengeSolution = asyncHandler(
     }
   }
 );
+
+//@desc Get Solutions
+//@route GET /api/challenges/:id/solutions
+//access private
+export const getAllChallengeSolutions = asyncHandler(
+  async (req: CustomRequest, res: Response) => {
+    try {
+      const challengeId = req.params.id;
+
+      const solutions = await ChallengeSolution.find({
+        challenge_id: challengeId,
+      });
+
+      res.status(200).json({ message: "successful", data: solutions });
+    } catch (error: any) {
+      console.log("ERRROR: ", error);
+    }
+  }
+);

@@ -25,6 +25,8 @@ interface IChallengeSolution {
   percentageCompleted: Number;
   completedDate: Date;
   rating: any;
+  demo_url: string;
+  solution: string;
 }
 
 const challengeSolutionSchema = new Schema<IChallengeSolution>(
@@ -67,6 +69,14 @@ const challengeSolutionSchema = new Schema<IChallengeSolution>(
     },
     rating: {
       type: {},
+      default: null,
+    },
+    demo_url: {
+      type: String,
+      default: null,
+    },
+    solution: {
+      type: String,
       default: null,
     },
   },

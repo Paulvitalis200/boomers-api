@@ -15,17 +15,17 @@ import { Schema, model } from "mongoose";
 // }]
 // percentageCompleted
 
-interface IChallengeSteps {
+interface IChallengeStep {
   user_id: Schema.Types.ObjectId;
   solution_id: Schema.Types.ObjectId;
-  steps: any;
+  challenge_id: Schema.Types.ObjectId;
+  description: string;
   completed: boolean;
-  subSteps: any;
   percentageCompleted: Number;
   comments: any;
 }
 
-const challengeStepsSchema = new Schema<IChallengeSteps>(
+const challengeStepSchema = new Schema<IChallengeStep>(
   {
     user_id: {
       type: Schema.Types.ObjectId,
@@ -37,12 +37,11 @@ const challengeStepsSchema = new Schema<IChallengeSteps>(
       required: true,
       ref: "ChallengeSolution",
     },
-
-    steps: {
-      type: [],
-      default: null,
+    challenge_id: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      ref: "TeamChallenge",
     },
-
     comments: {
       type: [],
       default: [],
@@ -52,15 +51,19 @@ const challengeStepsSchema = new Schema<IChallengeSteps>(
       required: true,
       default: 0,
     },
+    description: {
+      type: String,
+      required: true,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-const ChallengeSteps = model<IChallengeSteps>(
-  "ChallengeSteps",
-  challengeStepsSchema
+const ChallengeStep = model<IChallengeStep>(
+  "ChallengeStep",
+  challengeStepSchema
 );
 
-export default ChallengeSteps;
+export default ChallengeStep;
