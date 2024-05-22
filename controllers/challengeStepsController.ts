@@ -3,6 +3,7 @@ import { CustomRequest } from "../middleware/validateTokenHandler";
 import { Response } from "express";
 import ChallengeSolution from "../models/challengeSolutionModel";
 import ChallengeStep from "../models/challengeStepModel";
+import TeamChallenge from "../models/teamChallengeModel";
 
 //@desc POST Step
 //@route POST /api/challenges/:id/solutions/:solutionId/steps
@@ -167,6 +168,69 @@ export const getChallengeStep = asyncHandler(
       const step = await ChallengeStep.findById({ _id: stepId });
 
       res.status(200).json({ message: "successful", data: step });
+    } catch (error: any) {
+      console.log("ERRROR: ", error);
+    }
+  }
+);
+
+//@desc Delete Step
+//@route DELETE /api/challenges/:id/solutions/:solutionId/steps/:stepId
+//access private
+export const deleteChallengeStep = asyncHandler(
+  async (req: CustomRequest, res: Response) => {
+    try {
+      const solutionId = req.params.solutionId;
+      const challenge = await TeamChallenge.findById({
+        _id: req.params.id,
+      });
+
+      let challengeSolution = await ChallengeSolution.findById({
+        _id: solutionId,
+      });
+
+      if (!challengeSolution || !challenge) {
+        res.status(400).json({ error: "Solution does not exist" });
+        return;
+      }
+      if (req.user.id !== challengeSolution?.user_id.toString()) {
+        res.status(403).json({ error: "Solution does not belong to you" });
+      } else {
+        const deletedStep = await ChallengeStep.findByIdAndDelete(
+          req.params.stepId
+        );
+
+        if (!deletedStep) {
+          res.status(400).json({ error: "Step does not exist" });
+          return;
+        }
+        const updatedChallengeSolutionSteps = challengeSolution?.steps.filter(
+          (step: any) => step._id.toString() !== req.params.stepId
+        );
+
+        challengeSolution.steps = updatedChallengeSolutionSteps;
+        const initialSteps = challengeSolution?.steps;
+
+        const completedSteps: any = [];
+        initialSteps.map((step: any) => {
+          if (step.completed) completedSteps.push(step);
+        });
+
+        const percentageCompleted = Math.round(
+          (completedSteps.length / initialSteps.length) * 100
+        );
+
+        await ChallengeSolution.findByIdAndUpdate(
+          solutionId,
+          {
+            steps: initialSteps,
+            percentageCompleted: percentageCompleted,
+          },
+          { new: true }
+        );
+
+        res.status(204).json({ message: "successful" });
+      }
     } catch (error: any) {
       console.log("ERRROR: ", error);
     }

@@ -12,6 +12,7 @@ import {
 } from "../../controllers/challengeSolutionController";
 import {
   addChallengeStep,
+  deleteChallengeStep,
   getAllChallengeSteps,
   getChallengeStep,
   updateChallengeStep,
@@ -191,6 +192,7 @@ challengeRouter.get(
   "/:id/solutions/:solutionId/steps/:stepId",
   getChallengeStep
 );
+
 /**
  * @openapi
  * '/api/challenges/:id/solutions/:solutionId/steps/:stepId':
@@ -211,6 +213,28 @@ challengeRouter.get(
 challengeRouter.put(
   "/:id/solutions/:solutionId/steps/:stepId",
   updateChallengeStep
+);
+
+/**
+ * @openapi
+ * '/api/challenges/:id/solutions/:solutionId/steps/:stepId':
+ *  delete:
+ *     tags:
+ *     - Challenge Solution Controller
+ *     summary: Delete solution step
+ *     responses:
+ *      204:
+ *        description: Deleted
+ *      403:
+ *        description: Forbidden
+ *      404:
+ *        description: Not Found
+ *      500:
+ *        description: Server Error
+ */
+challengeRouter.delete(
+  "/:id/solutions/:solutionId/steps/:stepId",
+  deleteChallengeStep
 );
 
 export default challengeRouter;
