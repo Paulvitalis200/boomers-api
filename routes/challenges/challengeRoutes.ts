@@ -11,8 +11,10 @@ import {
   updateSolution,
 } from "../../controllers/challengeSolutionController";
 import {
-  addStep,
-  getAllSteps,
+  addChallengeStep,
+  getAllChallengeSteps,
+  getChallengeStep,
+  updateChallengeStep,
 } from "../../controllers/challengeStepsController";
 const challengeRouter = express.Router();
 
@@ -147,12 +149,12 @@ challengeRouter.patch("/:id/solutions/:solutionId", updateSolution);
  *      500:
  *        description: Server Error
  */
-challengeRouter.post("/:id/solutions/:solutionId/steps", addStep);
+challengeRouter.post("/:id/solutions/:solutionId/steps", addChallengeStep);
 
 /**
  * @openapi
  * '/api/challenges/:id/solutions/:solutionId/steps':
- *  post:
+ *  get:
  *     tags:
  *     - Challenge Solution Controller
  *     summary: Get solution steps
@@ -166,6 +168,49 @@ challengeRouter.post("/:id/solutions/:solutionId/steps", addStep);
  *      500:
  *        description: Server Error
  */
-challengeRouter.get("/:id/solutions/:solutionId/steps", getAllSteps);
+challengeRouter.get("/:id/solutions/:solutionId/steps", getAllChallengeSteps);
+
+/**
+ * @openapi
+ * '/api/challenges/:id/solutions/:solutionId/steps/stepId':
+ *  gett:
+ *     tags:
+ *     - Challenge Solution Controller
+ *     summary: Get solution steps
+ *     responses:
+ *      200:
+ *        description: Success
+ *      401:
+ *        description: Unauthorized
+ *      404:
+ *        description: Not Found
+ *      500:
+ *        description: Server Error
+ */
+challengeRouter.get(
+  "/:id/solutions/:solutionId/steps/:stepId",
+  getChallengeStep
+);
+/**
+ * @openapi
+ * '/api/challenges/:id/solutions/:solutionId/steps/:stepId':
+ *  post:
+ *     tags:
+ *     - Challenge Solution Controller
+ *     summary: Update solution steps
+ *     responses:
+ *      200:
+ *        description: Success
+ *      401:
+ *        description: Unauthorized
+ *      404:
+ *        description: Not Found
+ *      500:
+ *        description: Server Error
+ */
+challengeRouter.put(
+  "/:id/solutions/:solutionId/steps/:stepId",
+  updateChallengeStep
+);
 
 export default challengeRouter;

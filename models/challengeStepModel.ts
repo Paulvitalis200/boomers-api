@@ -21,7 +21,6 @@ interface IChallengeStep {
   challenge_id: Schema.Types.ObjectId;
   description: string;
   completed: boolean;
-  percentageCompleted: Number;
   comments: any;
 }
 
@@ -46,14 +45,14 @@ const challengeStepSchema = new Schema<IChallengeStep>(
       type: [],
       default: [],
     },
-    percentageCompleted: {
-      type: Number,
-      required: true,
-      default: 0,
-    },
     description: {
       type: String,
       required: true,
+    },
+    completed: {
+      type: Boolean,
+      required: true,
+      default: false,
     },
   },
   {
