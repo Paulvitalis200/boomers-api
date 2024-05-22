@@ -5,11 +5,12 @@ import ChallengeSolution from "../models/challengeSolutionModel";
 import TeamChallenge from "../models/teamChallengeModel";
 import Team from "../models/teamModel";
 import TeamMember from "../models/teamMemberModel";
+import ChallengeStep from "../models/challengeStepModel";
 
 //@desc Post Solution
 //@route POST /api/challenges/:id/solutions
 //access private
-export const postSolution = asyncHandler(
+export const postChallengeSolution = asyncHandler(
   async (req: CustomRequest, res: Response) => {
     try {
       const challenge_id = req.params.id;
@@ -71,7 +72,7 @@ export const postSolution = asyncHandler(
 //@desc PATCH Solution
 //@route PATCH /api/challenges/:id/solutions/:solutionId
 //access private
-export const updateSolution = asyncHandler(
+export const updateChallengeSolution = asyncHandler(
   async (req: CustomRequest, res: Response) => {
     try {
       const solutionId = req.params.solutionId;
@@ -149,7 +150,7 @@ export const getChallengeSolution = asyncHandler(
   }
 );
 
-//@desc Get Solutions
+//@desc Delete Solutions
 //@route GET /api/challenges/:id/solutions
 //access private
 export const getAllChallengeSolutions = asyncHandler(
@@ -164,6 +165,40 @@ export const getAllChallengeSolutions = asyncHandler(
       res.status(200).json({ message: "successful", data: solutions });
     } catch (error: any) {
       console.log("ERRROR: ", error);
+    }
+  }
+);
+
+//@desc DELETE Solution
+//@route DELETE /api/challenges/:id/solutions/:solutionId
+//access private
+export const deleteChallengeSolution = asyncHandler(
+  async (req: CustomRequest, res: Response) => {
+    try {
+      const solution_id = req.params.solutionId;
+      const solution = await ChallengeSolution.findById({ _id: solution_id });
+
+      const challenge = await TeamChallenge.findById({
+        _id: req.params.id,
+      });
+
+      if (!solution || !challenge) {
+        res.status(404).json({ error: "Solution does not exist" });
+        return;
+      }
+      if (req.user.id !== solution?.user_id.toString()) {
+        res.status(403).json({ error: "Solution does not belong to you" });
+        return;
+      } else {
+        await ChallengeSolution.findByIdAndDelete(solution_id);
+
+        await ChallengeStep.deleteMany({ solution_id: { $in: solution_id } });
+
+        res.status(204).json({ message: "successful" });
+      }
+    } catch (error: any) {
+      console.log("ERRROR: ", error);
+      res.status(400).json({ error: error });
     }
   }
 );

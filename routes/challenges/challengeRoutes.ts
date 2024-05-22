@@ -5,10 +5,11 @@ import {
 } from "../../controllers/challengesController";
 import validateToken from "../../middleware/validateTokenHandler";
 import {
+  deleteChallengeSolution,
   getAllChallengeSolutions,
   getChallengeSolution,
-  postSolution,
-  updateSolution,
+  postChallengeSolution,
+  updateChallengeSolution,
 } from "../../controllers/challengeSolutionController";
 import {
   addChallengeStep,
@@ -78,7 +79,7 @@ challengeRouter.get("/:id", getChallenge);
  *      500:
  *        description: Server Error
  */
-challengeRouter.post("/:id/solutions", postSolution);
+challengeRouter.post("/:id/solutions", postChallengeSolution);
 
 /**
  * @openapi
@@ -131,7 +132,7 @@ challengeRouter.get("/:id/solutions/:solutionId", getChallengeSolution);
  *      500:
  *        description: Server Error
  */
-challengeRouter.patch("/:id/solutions/:solutionId", updateSolution);
+challengeRouter.patch("/:id/solutions/:solutionId", updateChallengeSolution);
 
 /**
  * @openapi
@@ -236,5 +237,24 @@ challengeRouter.delete(
   "/:id/solutions/:solutionId/steps/:stepId",
   deleteChallengeStep
 );
+
+/**
+ * @openapi
+ * '/api/challenges/:id/solutions/:solutionId/':
+ *  delete:
+ *     tags:
+ *     - Challenge Solution Controller
+ *     summary: Delete solution
+ *     responses:
+ *      204:
+ *        description: Deleted
+ *      403:
+ *        description: Forbidden
+ *      404:
+ *        description: Not Found
+ *      500:
+ *        description: Server Error
+ */
+challengeRouter.delete("/:id/solutions/:solutionId", deleteChallengeSolution);
 
 export default challengeRouter;
