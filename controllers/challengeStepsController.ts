@@ -95,7 +95,7 @@ export const updateChallengeStep = asyncHandler(
       } else {
         const { description, completed } = req.body;
 
-        if (!description.trim()) {
+        if (description && !description.trim()) {
           res.status(400).json({ error: "Please put a valid description" });
         } else {
           let challengeSolution: any = await ChallengeSolution.findById({
@@ -190,7 +190,7 @@ export const deleteChallengeStep = asyncHandler(
       });
 
       if (!challengeSolution || !challenge) {
-        res.status(400).json({ error: "Solution does not exist" });
+        res.status(404).json({ error: "Solution does not exist" });
         return;
       }
       if (req.user.id !== challengeSolution?.user_id.toString()) {

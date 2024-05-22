@@ -50,6 +50,7 @@ export const postSolution = asyncHandler(
           const challengeSolution = await ChallengeSolution.create({
             challenge_id: challenge_id,
             user_id: req.user.id,
+            status: 1,
           });
 
           res
@@ -76,13 +77,57 @@ export const updateSolution = asyncHandler(
       const solutionId = req.params.solutionId;
       const solution = await ChallengeSolution.findById({ _id: solutionId });
 
+      const challenge = await TeamChallenge.findById({
+        _id: req.params.id,
+      });
+
+      if (!solution || !challenge) {
+        res.status(404).json({ error: "Solution does not exist" });
+        return;
+      }
       if (req.user.id !== solution?.user_id.toString()) {
         res.status(403).json({ error: "Solution does not belong to you" });
+        return;
       } else {
-        res.status(200).json({ message: "successful", data: solution });
+        const { status, demo_url, solution } = req.body;
+        let completedDate;
+
+        if (status && status !== 1 && status !== 0 && status !== 2) {
+          res.status(400).json({
+            error: "Kindly put a valid value.",
+          });
+          return;
+        }
+
+        if (status && status === 2) {
+          const challengeSolution = await ChallengeSolution.findById({
+            _id: solutionId,
+          });
+
+          if (challengeSolution?.percentageCompleted !== 100) {
+            res.status(400).json({
+              error: "Kindly complete all the steps before submitting",
+            });
+            return;
+          }
+          completedDate = new Date();
+        }
+
+        const updatedSolution = await ChallengeSolution.findByIdAndUpdate(
+          solutionId,
+          {
+            status: status,
+            demo_url,
+            solution,
+            completedDate,
+          },
+          { new: true }
+        );
+        res.status(200).json({ message: "successful", data: updatedSolution });
       }
     } catch (error: any) {
       console.log("ERRROR: ", error);
+      res.status(400).json({ error: error });
     }
   }
 );

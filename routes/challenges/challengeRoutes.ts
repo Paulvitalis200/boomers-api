@@ -210,7 +210,7 @@ challengeRouter.get(
  *      500:
  *        description: Server Error
  */
-challengeRouter.put(
+challengeRouter.patch(
   "/:id/solutions/:solutionId/steps/:stepId",
   updateChallengeStep
 );
