@@ -23,6 +23,13 @@ import {
   getChallengeStep,
   updateChallengeStep,
 } from "../../controllers/challengeStepsController";
+import {
+  deleteChallengeComment,
+  getChallengeComment,
+  getChallengeComments,
+  postChallengeComment,
+  updateChallengeComment,
+} from "../../controllers/team/teamChallengeController";
 const challengeRouter = express.Router();
 
 challengeRouter.use(validateToken);
@@ -378,4 +385,110 @@ challengeRouter.delete(
   "/:id/solutions/:solutionId/comments/:commentId",
   deleteSolutionComment
 );
+
+/**
+ * @openapi
+ * '/api/challenges/:id/comments':
+ *  post:
+ *     tags:
+ *     - Team Challenge Controller
+ *     summary: Add comment to challenge
+ *     responses:
+ *      201:
+ *        description: Created
+ *      400:
+ *        description: Bad Request
+ *      403:
+ *        description: Forbidden
+ *      404:
+ *        description: Not Found
+ *      500:
+ *        description: Server Error
+ */
+challengeRouter.post("/:id/comments", postChallengeComment);
+
+/**
+ * @openapi
+ * '/api/challenges/:id/comments/:commentId':
+ *  put:
+ *     tags:
+ *     - Team Challenge Controller
+ *     summary: Update challenge comment
+ *     responses:
+ *      201:
+ *        description: Created
+ *      400:
+ *        description: Bad Request
+ *      403:
+ *        description: Forbidden
+ *      404:
+ *        description: Not Found
+ *      500:
+ *        description: Server Error
+ */
+challengeRouter.put("/:id/comments/:commentId", updateChallengeComment);
+
+/**
+ * @openapi
+ * '/api/challenges/:id/comments':
+ *  get:
+ *     tags:
+ *     - Team Challenge Controller
+ *     summary: Get challenge comments
+ *     responses:
+ *      200:
+ *        description: Success
+ *      400:
+ *        description: Bad Request
+ *      403:
+ *        description: Forbidden
+ *      404:
+ *        description: Not Found
+ *      500:
+ *        description: Server Error
+ */
+challengeRouter.get("/:id/comments", getChallengeComments);
+
+/**
+ * @openapi
+ * '/api/challenges/:id/comments/:commentId':
+ *  get:
+ *     tags:
+ *     - Team Challenge Controller
+ *     summary: Get challenge comment
+ *     responses:
+ *      200:
+ *        description: Success
+ *      400:
+ *        description: Bad Request
+ *      403:
+ *        description: Forbidden
+ *      404:
+ *        description: Not Found
+ *      500:
+ *        description: Server Error
+ */
+challengeRouter.get("/:id/comments/:commentId", getChallengeComment);
+
+/**
+ * @openapi
+ * '/api/challenges/:id/comments/:commentId':
+ *  delete:
+ *     tags:
+ *     - Team Challenge Controller
+ *     summary: Delete challenge comment
+ *     responses:
+ *      204:
+ *        description: Success
+ *      400:
+ *        description: Bad Request
+ *      403:
+ *        description: Forbidden
+ *      404:
+ *        description: Not Found
+ *      500:
+ *        description: Server Error
+ */
+challengeRouter.delete("/:id/comments/:commentId", deleteChallengeComment);
+
 export default challengeRouter;
