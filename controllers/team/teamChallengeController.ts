@@ -3,6 +3,9 @@ import asyncHandler from "express-async-handler";
 import Team from "../../models/teamModel";
 import { CustomRequest } from "../../middleware/validateTokenHandler";
 import TeamChallenge from "../../models/teamChallengeModel";
+import TeamMember from "../../models/teamMemberModel";
+import UserProfile from "../../models/userProfileModel";
+import ChallengeComment from "../../models/challengeCommentModel";
 
 //@desc Post Challenge
 //@route POST /api/teams/challenge
@@ -192,6 +195,222 @@ export const deleteIndividualTeamChallenge = asyncHandler(
       }
     } catch (error: any) {
       console.log(error);
+    }
+  }
+);
+
+//@desc Post Challenge comment
+//@route POST /api/challenges/:id/comments
+//access private
+export const postChallengeComment = asyncHandler(
+  async (req: CustomRequest, res: Response) => {
+    try {
+      const challenge_id = req.params.id;
+      const challengeExists: any = await TeamChallenge.find({
+        _id: challenge_id,
+      });
+
+      if (!challengeExists.length) {
+        res.status(404).json({ message: "Challenge does not exist" });
+        return;
+      }
+
+      const teamMembers = await TeamMember.find({
+        team_id: challengeExists[0].team_id,
+      });
+
+      if (!teamMembers) {
+        res.status(404);
+        throw new Error("No team members");
+      }
+
+      const teamMemberExists: any = teamMembers.find((member) => {
+        return member.user_id.toString() === req.user.id;
+      });
+
+      if (!teamMemberExists) {
+        res.status(403).json({ message: "User does not belong to the team" });
+      } else {
+        const { comment } = req.body;
+
+        if (!comment.trim()) {
+          res.status(400).json({ message: "Put a comment will ya" });
+          return;
+        }
+
+        const user = await UserProfile.findOne({ user_id: req.user.id });
+
+        const challengeComment = await ChallengeComment.create({
+          challenge_id: req.params.id,
+          comment,
+          user: user,
+        });
+
+        res.status(201).json({ message: "successful", data: challengeComment });
+      }
+    } catch (error: any) {
+      console.log(error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+);
+
+//@desc Update Solution comment
+//@route PUT /api/challenges/:id/comments/:commentId
+//access private
+export const updateChallengeComment = asyncHandler(
+  async (req: CustomRequest, res: Response) => {
+    try {
+      const challenge_id = req.params.id;
+      const challengeExists: any = await TeamChallenge.findOne({
+        _id: challenge_id,
+      });
+
+      if (!challengeExists) {
+        res.status(404).json({ message: "Challenge does not exist" });
+        return;
+      }
+
+      const teamMembers = await TeamMember.find({
+        team_id: challengeExists.team_id,
+      });
+
+      if (!teamMembers) {
+        res.status(404);
+        throw new Error("No team members");
+      }
+
+      const teamMemberExists: any = teamMembers.find((member) => {
+        return member.user_id.toString() === req.user.id;
+      });
+
+      if (!teamMemberExists) {
+        res.status(403).json({ message: "User does not belong to the team" });
+      } else {
+        const { comment } = req.body;
+
+        if (!comment.trim()) {
+          res.status(400).json({ message: "Put a comment will ya" });
+          return;
+        }
+
+        const challengeComment = await ChallengeComment.findOne({
+          _id: req.params.commentId,
+        });
+
+        console.log("CHJAL: ", challengeComment);
+        if (challengeComment?.user.user_id.toString() !== req.user.id) {
+          res.status(403).json({ error: "This is not your comment" });
+          return;
+        }
+
+        const updatedComment = await ChallengeComment.findByIdAndUpdate(
+          req.params.commentId,
+          {
+            comment: comment,
+          },
+          { new: true }
+        );
+
+        res.status(200).json({ message: "successful", data: updatedComment });
+      }
+    } catch (error: any) {
+      console.log(error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+);
+
+//@desc Get Challenge comments
+//@route GET /api/challenges/:id/comments
+//access private
+export const getChallengeComments = asyncHandler(
+  async (req: CustomRequest, res: Response) => {
+    try {
+      const challenge_id = req.params.id;
+      const challengeExists = await TeamChallenge.findOne({
+        _id: challenge_id,
+      });
+
+      if (!challengeExists) {
+        res.status(404).json({ message: "Challenge does not exist" });
+        return;
+      }
+
+      const challengeComments = await ChallengeComment.find({});
+
+      res.status(200).json({ message: "successful", data: challengeComments });
+    } catch (error: any) {
+      console.log(error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+);
+
+//@desc Get Challenge comment
+//@route GET /api/challenges/:id/comments/:commentId
+//access private
+export const getChallengeComment = asyncHandler(
+  async (req: CustomRequest, res: Response) => {
+    try {
+      const challenge_id = req.params.id;
+      const challengeExists: any = await TeamChallenge.findOne({
+        _id: challenge_id,
+      });
+
+      if (!challengeExists) {
+        res.status(404).json({ message: "Challenge does not exist" });
+        return;
+      }
+
+      const challengeComment = await ChallengeComment.findOne({
+        _id: req.params.commentId,
+      });
+
+      res.status(200).json({ message: "successful", data: challengeComment });
+    } catch (error: any) {
+      console.log(error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+);
+
+//@desc Delete Challenge comment
+//@route DELETE /api/challenges/:id/comments/:commentId
+//access private
+export const deleteChallengeComment = asyncHandler(
+  async (req: CustomRequest, res: Response) => {
+    try {
+      const challenge_id = req.params.id;
+      const challengeExists: any = await TeamChallenge.findOne({
+        _id: challenge_id,
+      });
+
+      if (!challengeExists) {
+        res.status(404).json({ message: "Challenge does not exist" });
+        return;
+      }
+
+      const challengeComment = await ChallengeComment.findOne({
+        _id: req.params.commentId,
+      });
+
+      if (!challengeComment) {
+        res.status(404).json({ message: "Comment does not exist" });
+        return;
+      }
+
+      if (challengeComment.user.user_id.toString() !== req.user.id) {
+        res.status(403).json({ error: "This is not your comment" });
+        return;
+      }
+
+      await ChallengeComment.findByIdAndDelete(req.params.commentId);
+
+      res.status(204).json({ message: "successful" });
+    } catch (error: any) {
+      console.log(error);
+      res.status(400).json({ error: error.message });
     }
   }
 );

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import Team from "../../models/teamModel";
 import { CustomRequest } from "../../middleware/validateTokenHandler";
+import TeamMember from "../../models/teamMemberModel";
 
 //@desc Create team
 //@route POST /api/teams
@@ -30,6 +31,11 @@ export const createTeam = asyncHandler(
         owner_id: req.user.id,
       });
 
+      await TeamMember.create({
+        owner_id: req.user.id,
+        team_id: team._id,
+        user_id: req.user.id,
+      });
       res.status(201).json({ message: "successful", data: team });
     } catch (error: any) {
       throw new Error(error);
