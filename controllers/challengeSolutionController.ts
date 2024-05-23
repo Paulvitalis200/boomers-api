@@ -6,6 +6,8 @@ import TeamChallenge from "../models/teamChallengeModel";
 import Team from "../models/teamModel";
 import TeamMember from "../models/teamMemberModel";
 import ChallengeStep from "../models/challengeStepModel";
+import UserProfile from "../models/userProfileModel";
+import SolutionComment from "../models/solutionCommentModel";
 
 //@desc Post Solution
 //@route POST /api/challenges/:id/solutions
@@ -37,7 +39,7 @@ export const postChallengeSolution = asyncHandler(
       });
 
       if (!teamMemberExists) {
-        res.status(401).json({ message: "User does not belong to the team" });
+        res.status(403).json({ message: "User does not belong to the team" });
       } else {
         const solutionExists = await ChallengeSolution.find({
           challenge_id: challenge_id,
@@ -199,6 +201,221 @@ export const deleteChallengeSolution = asyncHandler(
     } catch (error: any) {
       console.log("ERRROR: ", error);
       res.status(400).json({ error: error });
+    }
+  }
+);
+
+//@desc Post Solution comment
+//@route POST /api/challenges/:id/solutions/:solutionId/comments
+//access private
+export const postSolutionComment = asyncHandler(
+  async (req: CustomRequest, res: Response) => {
+    try {
+      const challenge_id = req.params.id;
+      const challengeExists: any = await TeamChallenge.find({
+        _id: challenge_id,
+      });
+
+      if (!challengeExists.length) {
+        res.status(404).json({ message: "Challenge does not exist" });
+        return;
+      }
+
+      const teamMembers = await TeamMember.find({
+        team_id: challengeExists[0].team_id,
+      });
+
+      if (!teamMembers) {
+        res.status(404);
+        throw new Error("No team members");
+      }
+
+      const teamMemberExists: any = teamMembers.find((member) => {
+        return member.user_id.toString() === req.user.id;
+      });
+
+      if (!teamMemberExists) {
+        res.status(403).json({ message: "User does not belong to the team" });
+      } else {
+        const { comment } = req.body;
+
+        if (!comment.trim()) {
+          res.status(400).json({ message: "Put a comment will ya" });
+          return;
+        }
+
+        const user = await UserProfile.find({ user_id: req.user.id });
+
+        const solutionComment = await SolutionComment.create({
+          solution_id: req.params.solutionId,
+          comment,
+          user: user[0],
+        });
+
+        res.status(201).json({ message: "successful", data: solutionComment });
+      }
+    } catch (error: any) {
+      console.log(error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+);
+
+//@desc Update Solution comment
+//@route PUT /api/challenges/:id/solutions/:solutionId/comments/:commentId
+//access private
+export const updateSolutionComment = asyncHandler(
+  async (req: CustomRequest, res: Response) => {
+    try {
+      const challenge_id = req.params.id;
+      const challengeExists: any = await TeamChallenge.find({
+        _id: challenge_id,
+      });
+
+      if (!challengeExists.length) {
+        res.status(404).json({ message: "Challenge does not exist" });
+        return;
+      }
+
+      const teamMembers = await TeamMember.find({
+        team_id: challengeExists[0].team_id,
+      });
+
+      if (!teamMembers) {
+        res.status(404);
+        throw new Error("No team members");
+      }
+
+      const teamMemberExists: any = teamMembers.find((member) => {
+        return member.user_id.toString() === req.user.id;
+      });
+
+      if (!teamMemberExists) {
+        res.status(403).json({ message: "User does not belong to the team" });
+      } else {
+        const { comment } = req.body;
+
+        if (!comment.trim()) {
+          res.status(400).json({ message: "Put a comment will ya" });
+          return;
+        }
+
+        const solutionComment = await SolutionComment.find({
+          _id: req.params.commentId,
+        });
+
+        if (solutionComment[0]?.user.user_id.toString() !== req.user.id) {
+          res.status(403).json({ error: "This is not your comment" });
+          return;
+        }
+
+        const updatedComment = await SolutionComment.findByIdAndUpdate(
+          req.params.commentId,
+          {
+            comment: comment,
+          },
+          { new: true }
+        );
+
+        res.status(200).json({ message: "successful", data: updatedComment });
+      }
+    } catch (error: any) {
+      console.log(error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+);
+
+//@desc Get Solution comments
+//@route GET /api/challenges/:id/solutions/:solutionId/comments
+//access private
+export const getSolutionComments = asyncHandler(
+  async (req: CustomRequest, res: Response) => {
+    try {
+      const challenge_id = req.params.id;
+      const challengeExists: any = await TeamChallenge.find({
+        _id: challenge_id,
+      });
+
+      if (!challengeExists.length) {
+        res.status(404).json({ message: "Challenge does not exist" });
+        return;
+      }
+
+      const solutionComments = await SolutionComment.find({});
+
+      res.status(200).json({ message: "successful", data: solutionComments });
+    } catch (error: any) {
+      console.log(error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+);
+
+//@desc Get Solution comment
+//@route GET /api/challenges/:id/solutions/:solutionId/comments/:commentId
+//access private
+export const getSolutionComment = asyncHandler(
+  async (req: CustomRequest, res: Response) => {
+    try {
+      const challenge_id = req.params.id;
+      const challengeExists: any = await TeamChallenge.find({
+        _id: challenge_id,
+      });
+
+      if (!challengeExists.length) {
+        res.status(404).json({ message: "Challenge does not exist" });
+        return;
+      }
+
+      const solutionComment = await SolutionComment.findOne({
+        _id: req.params.commentId,
+      });
+
+      res.status(200).json({ message: "successful", data: solutionComment });
+    } catch (error: any) {
+      console.log(error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+);
+
+//@desc Delete Solution comment
+//@route DELETE /api/challenges/:id/solutions/:solutionId/comments/:commentId
+//access private
+export const deleteSolutionComment = asyncHandler(
+  async (req: CustomRequest, res: Response) => {
+    try {
+      const challenge_id = req.params.id;
+      const challengeExists: any = await TeamChallenge.find({
+        _id: challenge_id,
+      });
+
+      if (!challengeExists.length) {
+        res.status(404).json({ message: "Challenge does not exist" });
+        return;
+      }
+
+      const solutionComment = await SolutionComment.findOne({
+        _id: req.params.commentId,
+      });
+
+      if (!solutionComment) {
+        res.status(404).json({ message: "Comment does not exist" });
+        return;
+      }
+
+      if (solutionComment.user.user_id.toString() !== req.user.id) {
+        res.status(403).json({ error: "This is not your comment" });
+        return;
+      }
+
+      await SolutionComment.findByIdAndDelete(req.params.commentId);
+
+      res.status(204).json({ message: "successful" });
+    } catch (error: any) {
+      console.log(error);
+      res.status(400).json({ error: error.message });
     }
   }
 );

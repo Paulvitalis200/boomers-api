@@ -6,10 +6,15 @@ import {
 import validateToken from "../../middleware/validateTokenHandler";
 import {
   deleteChallengeSolution,
+  deleteSolutionComment,
   getAllChallengeSolutions,
   getChallengeSolution,
+  getSolutionComment,
+  getSolutionComments,
   postChallengeSolution,
+  postSolutionComment,
   updateChallengeSolution,
+  updateSolutionComment,
 } from "../../controllers/challengeSolutionController";
 import {
   addChallengeStep,
@@ -257,4 +262,120 @@ challengeRouter.delete(
  */
 challengeRouter.delete("/:id/solutions/:solutionId", deleteChallengeSolution);
 
+/**
+ * @openapi
+ * '/api/challenges/:id/solutions/:solutionId/comments':
+ *  post:
+ *     tags:
+ *     - Challenge Solution Controller
+ *     summary: Creates challenge solution comment
+ *     responses:
+ *      201:
+ *        description: Created
+ *      400:
+ *        description: Bad Request
+ *      404:
+ *        description: Not Found
+ *      403:
+ *        description: Forbidden
+ *      500:
+ *        description: Server Error
+ */
+challengeRouter.post(
+  "/:id/solutions/:solutionId/comments",
+  postSolutionComment
+);
+
+/**
+ * @openapi
+ * '/api/challenges/:id/solutions/:solutionId/comments/:solutionId':
+ *  put:
+ *     tags:
+ *     - Challenge Solution Controller
+ *     summary: Update solution comment
+ *     responses:
+ *      200:
+ *        description: Created
+ *      400:
+ *        description: Bad Request
+ *      404:
+ *        description: Not Found
+ *      403:
+ *        description: Forbidden
+ *      500:
+ *        description: Server Error
+ */
+challengeRouter.put(
+  "/:id/solutions/:solutionId/comments/:commentId",
+  updateSolutionComment
+);
+
+/**
+ * @openapi
+ * '/api/challenges/:id/solutions/:solutionId/comments':
+ *  get:
+ *     tags:
+ *     - Challenge Solution Controller
+ *     summary: Get solution comments
+ *     responses:
+ *      200:
+ *        description: Success
+ *      400:
+ *        description: Bad Request
+ *      404:
+ *        description: Not Found
+ *      401:
+ *        description: Unauthorized
+ *      500:
+ *        description: Server Error
+ */
+challengeRouter.get("/:id/solutions/:solutionId/comments", getSolutionComments);
+
+/**
+ * @openapi
+ * '/api/challenges/:id/solutions/:solutionId/comments/:commentId':
+ *  get:
+ *     tags:
+ *     - Challenge Solution Controller
+ *     summary: Get solution comment
+ *     responses:
+ *      200:
+ *        description: Success
+ *      400:
+ *        description: Bad Request
+ *      404:
+ *        description: Not Found
+ *      401:
+ *        description: Unauthorized
+ *      500:
+ *        description: Server Error
+ */
+challengeRouter.get(
+  "/:id/solutions/:solutionId/comments/:commentId",
+  getSolutionComment
+);
+
+/**
+ * @openapi
+ * '/api/challenges/:id/solutions/:solutionId/comments/:commentId':
+ *  get:
+ *     tags:
+ *     - Challenge Solution Controller
+ *     summary: Delete solution comment
+ *     responses:
+ *      204:
+ *        description: Success
+ *      400:
+ *        description: Bad Request
+ *      404:
+ *        description: Not Found
+ *      401:
+ *        description: Unauthorized
+ *      500:
+ *        description: Server Error
+ */
+challengeRouter.delete(
+  "/:id/solutions/:solutionId/comments/:commentId",
+  deleteSolutionComment
+);
 export default challengeRouter;
