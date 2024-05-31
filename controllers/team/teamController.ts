@@ -48,7 +48,12 @@ export const createTeam = asyncHandler(
 //access private
 export const getAllTeams = asyncHandler(async (req: Request, res: Response) => {
   try {
-    const teams = await Team.find({});
+    let teams: any = [];
+    if (req.query.userId) {
+      teams = await Team.find({ owner_id: req.query.userId });
+    } else {
+      teams = await Team.find();
+    }
 
     res.status(200).json({ message: "successful", data: teams });
   } catch (error: any) {
