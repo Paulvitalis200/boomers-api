@@ -427,7 +427,7 @@ export const deleteSolutionComment = asyncHandler(
 export const postSolutionRating = asyncHandler(
   async (req: CustomRequest, res: Response) => {
     try {
-      const { rating } = req.body;
+      const { rating, feedback } = req.body;
 
       const challenge_id = req.params.id;
       const challenge: any = await TeamChallenge.findOne({
@@ -478,6 +478,7 @@ export const postSolutionRating = asyncHandler(
         challenge_id: challenge._id,
         solution_id: req.params.solutionId,
         rating: rating,
+        feedback: feedback ? feedback.trim() : null,
         user_id: req.user.id,
       });
 
