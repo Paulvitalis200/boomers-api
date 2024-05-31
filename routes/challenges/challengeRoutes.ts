@@ -11,6 +11,7 @@ import {
   getChallengeSolution,
   getSolutionComment,
   getSolutionComments,
+  getSolutionRatings,
   postChallengeSolution,
   postSolutionComment,
   postSolutionRating,
@@ -514,5 +515,26 @@ challengeRouter.delete("/:id/comments/:commentId", deleteChallengeComment);
  *        description: Server Error
  */
 challengeRouter.post("/:id/solutions/:solutionId/rating", postSolutionRating);
+
+/**
+ * @openapi
+ * '/api/challenges/:id/solutions/:solutionId/rating/:ratingId':
+ *  post:
+ *     tags:
+ *     - Challenge Solution Controller
+ *     summary: Get solution ratings
+ *     responses:
+ *      200:
+ *        description: Success
+ *      400:
+ *        description: Bad Request
+ *      404:
+ *        description: Not Found
+ *      401:
+ *        description: Unauthorized
+ *      500:
+ *        description: Server Error
+ */
+challengeRouter.get("/:id/solutions/:solutionId/rating", getSolutionRatings);
 
 export default challengeRouter;

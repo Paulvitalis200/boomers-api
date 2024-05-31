@@ -517,3 +517,39 @@ export const postSolutionRating = asyncHandler(
     }
   }
 );
+
+//@desc Get Solution ratings
+//@route GET /api/challenges/:id/solutions/:solutionId/rating
+//access private
+export const getSolutionRatings = asyncHandler(
+  async (req: CustomRequest, res: Response) => {
+    try {
+      const challenge_id = req.params.id;
+      const challenge: any = await TeamChallenge.findOne({
+        _id: challenge_id,
+      });
+      const solution = await ChallengeSolution.findById({
+        _id: req.params.solutionId,
+      });
+
+      if (!challenge) {
+        res.status(404).json({ message: "Challenge does not exist" });
+        return;
+      }
+
+      if (!solution) {
+        res.status(404).json({ message: "Solution does not exist" });
+        return;
+      }
+
+      const response = await SolutionRating.find({
+        solution_id: req.params.solutionId,
+      });
+
+      res.status(200).json({ message: "successful", data: response });
+    } catch (error: any) {
+      console.log(error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+);
