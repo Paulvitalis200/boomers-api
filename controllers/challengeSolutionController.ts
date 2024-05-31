@@ -553,3 +553,87 @@ export const getSolutionRatings = asyncHandler(
     }
   }
 );
+
+//@desc Update Solution rating
+//@route GET /api/challenges/:id/solutions/:solutionId/rating/:ratingId
+//access private
+export const updateSolutionRating = asyncHandler(
+  async (req: CustomRequest, res: Response) => {
+    try {
+      const { rating, feedback } = req.body;
+      const challenge_id = req.params.id;
+      const challenge: any = await TeamChallenge.findOne({
+        _id: challenge_id,
+      });
+      const solution = await ChallengeSolution.findById({
+        _id: req.params.solutionId,
+      });
+
+      if (!challenge) {
+        res.status(404).json({ message: "Challenge does not exist" });
+        return;
+      }
+
+      if (!solution) {
+        res.status(404).json({ message: "Solution does not exist" });
+        return;
+      }
+
+      const userRating = await SolutionRating.findById(req.params.ratingId);
+
+      if (!userRating) {
+        res.status(404).json({ message: "Rating does not exist" });
+        return;
+      }
+      if (req.user.id !== userRating?.user_id.toString()) {
+        res
+          .status(403)
+          .json({ message: "Cannot update since this is not your rating." });
+        return;
+      }
+      const response = await SolutionRating.findByIdAndUpdate(
+        req.params.ratingId,
+        {
+          rating: rating,
+          feedback: feedback ? feedback.trim() : null,
+        },
+        { new: true }
+      );
+
+      if (challenge.owner_id.toString() === req.user.id) {
+        await ChallengeSolution.findByIdAndUpdate(
+          req.params.solutionId,
+          {
+            owner_rating: rating,
+          },
+          {
+            new: true,
+          }
+        );
+      } else {
+        let solutionRatings = await SolutionRating.find({
+          solution_id: req.params.solutionId,
+        });
+
+        const averageRating =
+          solutionRatings.reduce((total, next) => total + next.rating, 0) /
+          solutionRatings.length;
+
+        await ChallengeSolution.findByIdAndUpdate(
+          req.params.solutionId,
+          {
+            overall_rating: averageRating,
+          },
+          {
+            new: true,
+          }
+        );
+      }
+
+      res.status(200).json({ message: "successful", data: response });
+    } catch (error: any) {
+      console.log(error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+);

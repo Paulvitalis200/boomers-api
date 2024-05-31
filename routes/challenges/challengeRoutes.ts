@@ -17,6 +17,7 @@ import {
   postSolutionRating,
   updateChallengeSolution,
   updateSolutionComment,
+  updateSolutionRating,
 } from "../../controllers/challengeSolutionController";
 import {
   addChallengeStep,
@@ -518,7 +519,7 @@ challengeRouter.post("/:id/solutions/:solutionId/rating", postSolutionRating);
 
 /**
  * @openapi
- * '/api/challenges/:id/solutions/:solutionId/rating/:ratingId':
+ * '/api/challenges/:id/solutions/:solutionId/rating':
  *  post:
  *     tags:
  *     - Challenge Solution Controller
@@ -536,5 +537,31 @@ challengeRouter.post("/:id/solutions/:solutionId/rating", postSolutionRating);
  *        description: Server Error
  */
 challengeRouter.get("/:id/solutions/:solutionId/rating", getSolutionRatings);
+
+/**
+ * @openapi
+ * '/api/challenges/:id/solutions/:solutionId/rating/:ratingId':
+ *  post:
+ *     tags:
+ *     - Challenge Solution Controller
+ *     summary: Update rating
+ *     responses:
+ *      200:
+ *        description: Success
+ *      400:
+ *        description: Bad Request
+ *      403:
+ *        description: Forbidden
+ *      404:
+ *        description: Not Found
+ *      401:
+ *        description: Unauthorized
+ *      500:
+ *        description: Server Error
+ */
+challengeRouter.put(
+  "/:id/solutions/:solutionId/rating/:ratingId",
+  updateSolutionRating
+);
 
 export default challengeRouter;
