@@ -8,6 +8,7 @@ import TeamMember from "../models/teamMemberModel";
 import ChallengeStep from "../models/challengeStepModel";
 import UserProfile from "../models/userProfileModel";
 import SolutionComment from "../models/solutionCommentModel";
+import SolutionRating from "../models/solutionRatingModel";
 
 //@desc Post Solution
 //@route POST /api/challenges/:id/solutions
@@ -415,6 +416,102 @@ export const deleteSolutionComment = asyncHandler(
       res.status(204).json({ message: "successful" });
     } catch (error: any) {
       console.log(error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+);
+
+//@desc Post Solution rating
+//@route POST /api/challenges/:id/solutions/:solutionId/rating
+//access private
+export const postSolutionRating = asyncHandler(
+  async (req: CustomRequest, res: Response) => {
+    try {
+      const { rating } = req.body;
+
+      const challenge_id = req.params.id;
+      const challenge: any = await TeamChallenge.findOne({
+        _id: challenge_id,
+      });
+      const solution = await ChallengeSolution.findById({
+        _id: req.params.solutionId,
+      });
+
+      if (!challenge) {
+        res.status(404).json({ message: "Challenge does not exist" });
+        return;
+      }
+
+      if (!solution) {
+        res.status(404).json({ message: "Solution does not exist" });
+        return;
+      }
+
+      const teamMembers = await TeamMember.find({
+        team_id: challenge.team_id,
+      });
+
+      const belongsToTeam = teamMembers.find(
+        (user) => user.user_id.toString() === req.user.id
+      );
+
+      if (challenge.owner_id.toString() !== req.user.id && !belongsToTeam) {
+        res.status(403).json({ message: "User does not belong to the team" });
+        return;
+      }
+
+      if (!rating) {
+        res.status(400).json({ message: "No rating" });
+        return;
+      }
+
+      const ratingExists = await SolutionRating.find({
+        user_id: req.user.id,
+      });
+
+      if (ratingExists.length) {
+        res.status(409).json({ message: "Rating already exists" });
+        return;
+      }
+
+      const response = await SolutionRating.create({
+        challenge_id: challenge._id,
+        solution_id: req.params.solutionId,
+        rating: rating,
+        user_id: req.user.id,
+      });
+
+      if (challenge.owner_id.toString() === req.user.id) {
+        await ChallengeSolution.findByIdAndUpdate(
+          req.params.solutionId,
+          {
+            owner_rating: response.rating,
+          },
+          {
+            new: true,
+          }
+        );
+      } else {
+        let solutionRatings = await SolutionRating.find({
+          solution_id: req.params.solutionId,
+        });
+
+        const averageRating =
+          solutionRatings.reduce((total, next) => total + next.rating, 0) /
+          solutionRatings.length;
+
+        await ChallengeSolution.findByIdAndUpdate(
+          req.params.solutionId,
+          {
+            overall_rating: averageRating,
+          },
+          {
+            new: true,
+          }
+        );
+      }
+      res.status(201).json({ message: "successful", data: response });
+    } catch (error: any) {
       res.status(400).json({ error: error.message });
     }
   }

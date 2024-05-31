@@ -13,6 +13,7 @@ import {
   getSolutionComments,
   postChallengeSolution,
   postSolutionComment,
+  postSolutionRating,
   updateChallengeSolution,
   updateSolutionComment,
 } from "../../controllers/challengeSolutionController";
@@ -490,5 +491,28 @@ challengeRouter.get("/:id/comments/:commentId", getChallengeComment);
  *        description: Server Error
  */
 challengeRouter.delete("/:id/comments/:commentId", deleteChallengeComment);
+
+/**
+ * @openapi
+ * '/api/challenges/:id/solutions/:solutionId/rating':
+ *  post:
+ *     tags:
+ *     - Challenge Solution Controller
+ *     summary: Post solution rating
+ *     responses:
+ *      201:
+ *        description: Success
+ *      400:
+ *        description: Bad Request
+ *      404:
+ *        description: Not Found
+ *      401:
+ *        description: Unauthorized
+ *      403:
+ *        description: Forbidden
+ *      500:
+ *        description: Server Error
+ */
+challengeRouter.post("/:id/solutions/:solutionId/rating", postSolutionRating);
 
 export default challengeRouter;
