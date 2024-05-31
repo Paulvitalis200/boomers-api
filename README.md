@@ -14,9 +14,11 @@ SETTING UP PROJECT
     MONGO_DB_USER=${YOUR MONGO DB USERNAME}
     MONGO_DB_PASSWORD=${YOUR MONGO DB DATABASE ACCESS PASSWORD}
     NODE_ENV=local
-    USER_EMAIL=vitalispaul48@gmail.com
-    MAIL_PASSWORD=fzhbmgqekcjxvhib
+    USER_EMAIL=${email}
+    MAIL_PASSWORD=${password}
 ```
+
+In case guidance is needed on the environment variables, reach out to me at vitalispaul48@live.com for the values of the environment variables before running the project
 
 6. Run the application using `npm run dev`
 
