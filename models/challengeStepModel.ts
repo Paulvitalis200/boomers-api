@@ -1,20 +1,5 @@
 import { Schema, model } from "mongoose";
 
-// Id
-// User id
-// Solution_id
-// Steps: [{
-// id: ‘1’,
-// Description: ‘fhdskjhfdskj’,
-// Completed: boolean
-// SubSteps: [
-// Id: Test,
-// Description: Test
-// Completed: boolean
-// ]
-// }]
-// percentageCompleted
-
 interface IChallengeStep {
   user_id: Schema.Types.ObjectId;
   solution_id: Schema.Types.ObjectId;
