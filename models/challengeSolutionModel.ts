@@ -24,9 +24,15 @@ interface IChallengeSolution {
   comments: any;
   percentageCompleted: Number;
   completedDate: Date;
-  rating: any;
   demo_url: string;
   solution: string;
+  owner_rating: Rating;
+  overall_rating: number;
+}
+
+interface Rating {
+  rating: number;
+  feedback: string;
 }
 
 const challengeSolutionSchema = new Schema<IChallengeSolution>(
@@ -67,10 +73,6 @@ const challengeSolutionSchema = new Schema<IChallengeSolution>(
       type: Date,
       default: null,
     },
-    rating: {
-      type: {},
-      default: null,
-    },
     demo_url: {
       type: String,
       default: null,
@@ -78,6 +80,14 @@ const challengeSolutionSchema = new Schema<IChallengeSolution>(
     solution: {
       type: String,
       default: null,
+    },
+    owner_rating: {
+      type: {},
+      default: null,
+    },
+    overall_rating: {
+      type: Number,
+      default: 0,
     },
   },
   {

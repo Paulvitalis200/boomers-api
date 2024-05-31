@@ -7,14 +7,18 @@ import validateToken from "../../middleware/validateTokenHandler";
 import {
   deleteChallengeSolution,
   deleteSolutionComment,
+  deleteSolutionRating,
   getAllChallengeSolutions,
   getChallengeSolution,
   getSolutionComment,
   getSolutionComments,
+  getSolutionRatings,
   postChallengeSolution,
   postSolutionComment,
+  postSolutionRating,
   updateChallengeSolution,
   updateSolutionComment,
+  updateSolutionRating,
 } from "../../controllers/challengeSolutionController";
 import {
   addChallengeStep,
@@ -490,5 +494,101 @@ challengeRouter.get("/:id/comments/:commentId", getChallengeComment);
  *        description: Server Error
  */
 challengeRouter.delete("/:id/comments/:commentId", deleteChallengeComment);
+
+/**
+ * @openapi
+ * '/api/challenges/:id/solutions/:solutionId/rating':
+ *  post:
+ *     tags:
+ *     - Challenge Solution Controller
+ *     summary: Post solution rating
+ *     responses:
+ *      201:
+ *        description: Success
+ *      400:
+ *        description: Bad Request
+ *      404:
+ *        description: Not Found
+ *      401:
+ *        description: Unauthorized
+ *      403:
+ *        description: Forbidden
+ *      500:
+ *        description: Server Error
+ */
+challengeRouter.post("/:id/solutions/:solutionId/rating", postSolutionRating);
+
+/**
+ * @openapi
+ * '/api/challenges/:id/solutions/:solutionId/rating':
+ *  post:
+ *     tags:
+ *     - Challenge Solution Controller
+ *     summary: Get solution ratings
+ *     responses:
+ *      200:
+ *        description: Success
+ *      400:
+ *        description: Bad Request
+ *      404:
+ *        description: Not Found
+ *      401:
+ *        description: Unauthorized
+ *      500:
+ *        description: Server Error
+ */
+challengeRouter.get("/:id/solutions/:solutionId/rating", getSolutionRatings);
+
+/**
+ * @openapi
+ * '/api/challenges/:id/solutions/:solutionId/rating/:ratingId':
+ *  put:
+ *     tags:
+ *     - Challenge Solution Controller
+ *     summary: Update rating
+ *     responses:
+ *      200:
+ *        description: Success
+ *      400:
+ *        description: Bad Request
+ *      403:
+ *        description: Forbidden
+ *      404:
+ *        description: Not Found
+ *      401:
+ *        description: Unauthorized
+ *      500:
+ *        description: Server Error
+ */
+challengeRouter.put(
+  "/:id/solutions/:solutionId/rating/:ratingId",
+  updateSolutionRating
+);
+
+/**
+ * @openapi
+ * '/api/challenges/:id/solutions/:solutionId/rating/:ratingId':
+ *  delete:
+ *     tags:
+ *     - Challenge Solution Controller
+ *     summary: Delete rating
+ *     responses:
+ *      204:
+ *        description: No Response
+ *      400:
+ *        description: Bad Request
+ *      403:
+ *        description: Forbidden
+ *      404:
+ *        description: Not Found
+ *      401:
+ *        description: Unauthorized
+ *      500:
+ *        description: Server Error
+ */
+challengeRouter.delete(
+  "/:id/solutions/:solutionId/rating/:ratingId",
+  deleteSolutionRating
+);
 
 export default challengeRouter;
