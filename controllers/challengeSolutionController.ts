@@ -464,7 +464,10 @@ export const postSolutionRating = asyncHandler(
         res.status(400).json({ message: "No rating" });
         return;
       }
-
+      if (parseInt(rating) > 5 || parseInt(rating) < 0) {
+        res.status(400).json({ message: "Rating should be between 0 and 5" });
+        return;
+      }
       const ratingExists = await SolutionRating.find({
         user_id: req.user.id,
       });
@@ -477,7 +480,7 @@ export const postSolutionRating = asyncHandler(
       const response = await SolutionRating.create({
         challenge_id: challenge._id,
         solution_id: req.params.solutionId,
-        rating: rating,
+        rating: parseInt(rating),
         feedback: feedback ? feedback.trim() : null,
         user_id: req.user.id,
       });
@@ -591,6 +594,12 @@ export const updateSolutionRating = asyncHandler(
           .json({ message: "Cannot update since this is not your rating." });
         return;
       }
+
+      if (parseInt(rating) > 5 || parseInt(rating) < 0) {
+        res.status(400).json({ message: "Rating should be between 0 and 5" });
+        return;
+      }
+
       const response = await SolutionRating.findByIdAndUpdate(
         req.params.ratingId,
         {
