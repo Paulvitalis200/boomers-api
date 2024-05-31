@@ -496,7 +496,7 @@ export const postSolutionRating = asyncHandler(
           }
         );
       } else {
-        let solutionRatings = await SolutionRating.find({
+        const solutionRatings = await SolutionRating.find({
           solution_id: req.params.solutionId,
         });
 
@@ -620,7 +620,7 @@ export const updateSolutionRating = asyncHandler(
           }
         );
       } else {
-        let solutionRatings = await SolutionRating.find({
+        const solutionRatings = await SolutionRating.find({
           solution_id: req.params.solutionId,
         });
 
@@ -642,6 +642,87 @@ export const updateSolutionRating = asyncHandler(
       res.status(200).json({ message: "successful", data: response });
     } catch (error: any) {
       console.log(error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+);
+
+//@desc Delete Solution rating
+//@route GET /api/challenges/:id/solutions/:solutionId/rating/:ratingId
+//access private
+export const deleteSolutionRating = asyncHandler(
+  async (req: CustomRequest, res: Response) => {
+    try {
+      const challenge_id = req.params.id;
+      const challenge: any = await TeamChallenge.findOne({
+        _id: challenge_id,
+      });
+      const solution = await ChallengeSolution.findById({
+        _id: req.params.solutionId,
+      });
+
+      if (!challenge) {
+        res.status(404).json({ message: "Challenge does not exist" });
+        return;
+      }
+
+      if (!solution) {
+        res.status(404).json({ message: "Solution does not exist" });
+        return;
+      }
+
+      const userRating = await SolutionRating.findById(req.params.ratingId);
+
+      if (!userRating) {
+        res.status(404).json({ message: "Rating does not exist" });
+        return;
+      }
+      if (req.user.id !== userRating?.user_id.toString()) {
+        res
+          .status(403)
+          .json({ message: "Cannot delete since this is not your rating." });
+        return;
+      }
+
+      const response = await SolutionRating.findByIdAndDelete(
+        req.params.ratingId
+      );
+
+      if (challenge.owner_id.toString() === req.user.id) {
+        await ChallengeSolution.findByIdAndUpdate(
+          req.params.solutionId,
+          {
+            owner_rating: 0,
+          },
+          {
+            new: true,
+          }
+        );
+      } else {
+        const solutionRatings = await SolutionRating.find({
+          solution_id: req.params.solutionId,
+        });
+
+        let averageRating = 0;
+        if (solutionRatings.length) {
+          averageRating =
+            solutionRatings.reduce((total, next) => total + next.rating, 0) /
+            solutionRatings.length;
+        }
+
+        await ChallengeSolution.findByIdAndUpdate(
+          req.params.solutionId,
+          {
+            overall_rating: averageRating,
+          },
+          {
+            new: true,
+          }
+        );
+      }
+
+      res.status(204).json({ message: "successful" });
+    } catch (error: any) {
       res.status(400).json({ error: error.message });
     }
   }

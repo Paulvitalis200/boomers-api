@@ -7,6 +7,7 @@ import validateToken from "../../middleware/validateTokenHandler";
 import {
   deleteChallengeSolution,
   deleteSolutionComment,
+  deleteSolutionRating,
   getAllChallengeSolutions,
   getChallengeSolution,
   getSolutionComment,
@@ -541,7 +542,7 @@ challengeRouter.get("/:id/solutions/:solutionId/rating", getSolutionRatings);
 /**
  * @openapi
  * '/api/challenges/:id/solutions/:solutionId/rating/:ratingId':
- *  post:
+ *  put:
  *     tags:
  *     - Challenge Solution Controller
  *     summary: Update rating
@@ -562,6 +563,32 @@ challengeRouter.get("/:id/solutions/:solutionId/rating", getSolutionRatings);
 challengeRouter.put(
   "/:id/solutions/:solutionId/rating/:ratingId",
   updateSolutionRating
+);
+
+/**
+ * @openapi
+ * '/api/challenges/:id/solutions/:solutionId/rating/:ratingId':
+ *  delete:
+ *     tags:
+ *     - Challenge Solution Controller
+ *     summary: Delete rating
+ *     responses:
+ *      204:
+ *        description: No Response
+ *      400:
+ *        description: Bad Request
+ *      403:
+ *        description: Forbidden
+ *      404:
+ *        description: Not Found
+ *      401:
+ *        description: Unauthorized
+ *      500:
+ *        description: Server Error
+ */
+challengeRouter.delete(
+  "/:id/solutions/:solutionId/rating/:ratingId",
+  deleteSolutionRating
 );
 
 export default challengeRouter;
