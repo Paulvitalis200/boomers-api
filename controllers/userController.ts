@@ -10,6 +10,8 @@ import dotenv from "dotenv";
 import UserProfile from "../models/userProfileModel";
 import { CustomRequest } from "../middleware/validateTokenHandler";
 import ResetPasswordToken from "../models/resetPasswordTokenModel";
+import Joi from "joi";
+const myCustomJoi = Joi.extend(require("joi-phone-number"));
 
 dotenv.config();
 
@@ -18,7 +20,8 @@ dotenv.config();
 //access public
 const registerUser = asyncHandler(async (req: Request, res: Response) => {
   try {
-    const { phoneNumber, email, password, username } = req.body;
+    const { phoneNumber, email, password, username, countryCode } = req.body;
+
     if (!email && !phoneNumber) {
       res.status(400);
       throw new Error("Please put an email or phone number");
@@ -37,7 +40,8 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
       res.status(400);
       throw new Error("Please put a username");
     }
-    let userAvailable: any = [];
+    let userAvailable = [];
+    let validatedPhoneNumber;
     if (email && username) {
       const isValid = EmailValidator.validate(email);
 
@@ -45,14 +49,39 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
         res.status(400);
         throw new Error("Email is not valid");
       }
+
       userAvailable = await User.find({
-        email,
+        $or: [{ email: email }, { username: username }],
       });
     }
 
-    // if (phoneNumber) {
-    //   userAvailable = await User.findOne({ phoneNumber });
-    // }
+    if (phoneNumber && username) {
+      if (phoneNumber.length > 10 || phoneNumber.length < 9) {
+        res.status(400).json({ message: "Invalid phone Number" });
+        return;
+      }
+
+      const isValidPhone = myCustomJoi
+        .string()
+        .phoneNumber({ defaultCountry: countryCode, format: "e164" })
+        .validate(phoneNumber);
+
+      if (isValidPhone.error) {
+        res.status(400).json({ message: "Invalid phone number" });
+        return;
+      }
+
+      validatedPhoneNumber = isValidPhone.value;
+
+      userAvailable = await User.find({
+        $or: [{ phoneNumber: validatedPhoneNumber }, { username: username }],
+      });
+
+      if (userAvailable.length > 0) {
+        res.status(409).json({ message: "User exists" });
+        return;
+      }
+    }
 
     const regexPattern =
       /^(?=.*[-\#\$\.\%\&\@\!\+\=\<\>\*])(?=.*[a-zA-Z])(?=.*\d).{8,}$/;
@@ -75,7 +104,7 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
     const user = await User.create({
       password: hashPassword,
       email,
-      phoneNumber,
+      phoneNumber: validatedPhoneNumber,
       username: username.trim(),
     });
 
@@ -85,7 +114,7 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
 
       const userCode = await UserVerificationCode.create({
         code: hashCode,
-        phoneNumber,
+        phoneNumber: validatedPhoneNumber,
         email,
         userId: user.id,
       });
@@ -139,6 +168,7 @@ export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
         email,
       });
     } else {
+      console.log("PHONE NUMBER: ", phoneNumber);
       hashedVerificationCode = await UserVerificationCode.findOne({
         phoneNumber: { $in: [phoneNumber] },
       });
@@ -149,10 +179,10 @@ export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
 
     if (!hashedVerificationCode) {
       if (!user) {
-        res.status(400).json({ error: "User does not exist." });
+        res.status(404).json({ error: "User does not exist." });
         return;
       } else {
-        res.status(400).json({ error: "Verification code expired." });
+        res.status(409).json({ error: "Verification code expired." });
         return;
       }
     }
@@ -172,6 +202,7 @@ export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
       res.status(400).json({ error: "User code expired" });
       return;
     } else {
+      console.log("USER: ", user);
       if (isCorrect) {
         const updateUser = await User.findByIdAndUpdate(user?._id, {
           isVerified: true,
@@ -220,14 +251,7 @@ export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
 export const resendVerificationCode = asyncHandler(
   async (req: Request, res: Response) => {
     try {
-      const { email, phoneNumber } = req.body;
-
-      let user;
-      if (email) user = await User.findOne({ email: { $in: [email] } });
-
-      if (phoneNumber)
-        user = await User.findOne({ phoneNumber: { $in: [phoneNumber] } });
-
+      const { email, phoneNumber, countryCode } = req.body;
       if (!email && !phoneNumber) {
         res.status(400);
         throw new Error("Please put an email or phone number");
@@ -236,6 +260,30 @@ export const resendVerificationCode = asyncHandler(
       if (email && phoneNumber) {
         res.status(400);
         throw new Error("Please select either email or phone number");
+      }
+      let user;
+      let validatedPhoneNumber;
+      if (email) user = await User.findOne({ email: { $in: [email] } });
+
+      if (phoneNumber) {
+        const isValidPhone = myCustomJoi
+          .string()
+          .phoneNumber({
+            defaultCountry: countryCode ? countryCode : "KE",
+            format: "e164",
+          })
+          .validate(phoneNumber);
+
+        if (isValidPhone.error) {
+          res.status(400).json({ message: "Invalid phone number" });
+          return;
+        }
+
+        validatedPhoneNumber = isValidPhone.value;
+
+        user = await User.findOne({
+          phoneNumber: { $in: [validatedPhoneNumber] },
+        });
       }
 
       if (user) {
@@ -247,7 +295,7 @@ export const resendVerificationCode = asyncHandler(
             });
           } else {
             codeAvailable = await UserVerificationCode.findOne({
-              phoneNumber: { $in: [phoneNumber] },
+              phoneNumber: { $in: [validatedPhoneNumber] },
             });
           }
 
@@ -263,7 +311,7 @@ export const resendVerificationCode = asyncHandler(
             );
             if (email) {
               const emailTemplate = `<div>
-              <p>Hi,</p>
+              <p>Hi ${user.username},</p>
               <p>You requested a new verification code.</p>
               <p>Your verification code is: </p>
               <h2>${unhashedCode}</h2>
@@ -355,7 +403,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
     const url = process.env.PORT;
     const emailTemplate = `
             <div>
-                <h2>Hi ${email}</h2>
+                <h2>Hi ${user.username}</h2>
                 <p>You requested to reset your password</p>
                 <p>Please click on the below link to reset your password</p>
                 <a href="${url}/passwordReset?token=${resetToken}&id=${user._id}">Reset Password</a>
@@ -424,7 +472,7 @@ export const resetPassword = async (req: Request, res: Response) => {
     // Send email with the reset link
     const emailTemplate = `
              <div>
-                 <h2>Hi ${user[0].email}</h2>
+                 <h2>Hi ${user[0].username}</h2>
                  <p>Your password was reset successfully</p>
              </div>`;
     // Assuming you have a function sendMail defined somewhere
