@@ -11,6 +11,7 @@ interface IUserProfile {
   user_id: any;
   username: string;
   gender: string;
+  profile_picture: string;
 }
 
 const userProfileSchema = new Schema<IUserProfile>(
@@ -49,6 +50,10 @@ const userProfileSchema = new Schema<IUserProfile>(
       default: null,
     },
     gender: {
+      type: String,
+      default: null,
+    },
+    profile_picture: {
       type: String,
       default: null,
     },
