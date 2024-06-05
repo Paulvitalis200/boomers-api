@@ -168,7 +168,6 @@ export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
         email,
       });
     } else {
-      console.log("PHONE NUMBER: ", phoneNumber);
       hashedVerificationCode = await UserVerificationCode.findOne({
         phoneNumber: { $in: [phoneNumber] },
       });
@@ -202,7 +201,6 @@ export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
       res.status(400).json({ error: "User code expired" });
       return;
     } else {
-      console.log("USER: ", user);
       if (isCorrect) {
         const updateUser = await User.findByIdAndUpdate(user?._id, {
           isVerified: true,

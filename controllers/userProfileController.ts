@@ -1,18 +1,48 @@
 import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import UserProfile from "../models/userProfileModel";
+import {
+  PutObjectCommand,
+  S3Client,
+  GetObjectCommand,
+} from "@aws-sdk/client-s3";
+import crypto from "crypto";
+import sharp from "sharp";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+
+const randomImageName = (bytes = 32) =>
+  crypto.randomBytes(bytes).toString("hex");
+const bucketName: any = process.env.BUCKET_NAME;
+const bucketRegion: any = process.env.BUCKET_REGION;
+const accessKey: any = process.env.ACCESS_KEY;
+const secretAccessKey: any = process.env.SECRET_ACCESS_KEY;
+
+const s3 = new S3Client({
+  credentials: {
+    accessKeyId: accessKey,
+    secretAccessKey: secretAccessKey,
+  },
+  region: bucketRegion,
+});
 
 //@desc Get user
 //@route GET /api/users/:id/profile
 //access public
 export const getProfile = asyncHandler(async (req: Request, res: Response) => {
   try {
-    const profile = await UserProfile.findOne({ userId: req.params.id });
-
+    const profile = await UserProfile.findOne({ user_id: req.params.id });
     if (!profile) {
       res.status(404).json({ message: "User profile does not exist" });
       return;
     }
+    const getObjectParams = {
+      Bucket: bucketName,
+      Key: profile?.profile_picture,
+    };
+    const command = new GetObjectCommand(getObjectParams);
+    const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+    profile.profile_picture = url;
+
     res.status(200).json({
       successful: true,
       profile,
@@ -25,10 +55,9 @@ export const getProfile = asyncHandler(async (req: Request, res: Response) => {
 //@desc Update user profile
 //@route PUT /api/users/:id/profile
 //access private
-export const updateUserProfile = asyncHandler(async (req, res) => {
+export const updateUserProfile = asyncHandler(async (req: any, res) => {
   try {
     const profile = await UserProfile.findOne({ user_id: req.params.id });
-    console.log("PROFI:E: ", profile);
     if (!profile) {
       res.status(404);
       throw new Error("User profile not found");
@@ -62,17 +91,17 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
     if (interests && typeof interests === "object")
       updateProfileBody.interests = interests;
 
-    if (
-      !interests &&
-      !phoneNumber &&
-      !firstName &&
-      !lastName &&
-      !bio &&
-      !gender
-    ) {
-      res.status(400);
-      throw new Error("Please put a valid value");
-    }
+    // if (
+    //   !interests &&
+    //   !phoneNumber &&
+    //   !firstName &&
+    //   !lastName &&
+    //   !bio &&
+    //   !gender
+    // ) {
+    //   res.status(400);
+    //   throw new Error("Please put a valid value");
+    // }
 
     if (gender && gender.trim().length > 0) {
       const genderLower = gender.toLowerCase();
@@ -88,6 +117,35 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
         res.status(400);
         throw new Error("Please put a valid gender");
       }
+    }
+
+    if (req.file) {
+      //resize image
+      const buffer = await sharp(req.file.buffer)
+        .resize({ height: 400, width: 400, fit: "contain" })
+        .toBuffer();
+      const params = {
+        Bucket: bucketName,
+        Key: randomImageName(),
+        Body: buffer,
+        ContentType: req.file.mimetype,
+      };
+
+      const command = new PutObjectCommand(params);
+
+      await s3.send(command);
+
+      await UserProfile.findByIdAndUpdate(
+        profile._id,
+        {
+          profile_picture: randomImageName(),
+        },
+        {
+          new: true,
+        }
+      );
+      res.status(200).json({ message: "Image updated" });
+      return;
     }
 
     const updatedProfile = await UserProfile.findByIdAndUpdate(
