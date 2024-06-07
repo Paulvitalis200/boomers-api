@@ -3,6 +3,29 @@ import asyncHandler from "express-async-handler";
 import Team from "../../models/teamModel";
 import { CustomRequest } from "../../middleware/validateTokenHandler";
 import TeamMember from "../../models/teamMemberModel";
+import {
+  PutObjectCommand,
+  S3Client,
+  GetObjectCommand,
+} from "@aws-sdk/client-s3";
+import crypto from "crypto";
+import sharp from "sharp";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+
+const randomImageName = (bytes = 32) =>
+  crypto.randomBytes(bytes).toString("hex");
+const bucketName: any = process.env.BUCKET_NAME;
+const bucketRegion: any = process.env.BUCKET_REGION;
+const accessKey: any = process.env.ACCESS_KEY;
+const secretAccessKey: any = process.env.SECRET_ACCESS_KEY;
+
+const s3 = new S3Client({
+  credentials: {
+    accessKeyId: accessKey,
+    secretAccessKey: secretAccessKey,
+  },
+  region: bucketRegion,
+});
 
 //@desc Create team
 //@route POST /api/teams
@@ -23,6 +46,39 @@ export const createTeam = asyncHandler(
         throw new Error("Team already exists");
       }
 
+      if (req.file) {
+        //resize image
+        const buffer = await sharp(req.file.buffer)
+          .resize({ height: 400, width: 400, fit: "contain" })
+          .toBuffer();
+        const params = {
+          Bucket: bucketName,
+          Key: randomImageName(),
+          Body: buffer,
+          ContentType: req.file.mimetype,
+        };
+
+        const command = new PutObjectCommand(params);
+
+        await s3.send(command);
+
+        const team = await Team.create({
+          name,
+          category,
+          audience,
+          teamUsername,
+          owner_id: req.user.id,
+          displayImage: randomImageName(),
+        });
+
+        await TeamMember.create({
+          owner_id: req.user.id,
+          team_id: team._id,
+          user_id: req.user.id,
+        });
+        res.status(201).json({ message: "successful", data: team });
+        return;
+      }
       const team = await Team.create({
         name,
         category,
@@ -49,8 +105,14 @@ export const createTeam = asyncHandler(
 export const getAllTeams = asyncHandler(async (req: Request, res: Response) => {
   try {
     let teams: any = [];
+    let { category, name } = req.query;
+
     if (req.query.userId) {
       teams = await Team.find({ owner_id: req.query.userId });
+    } else if (req.query.name) {
+      teams = await Team.find({ name });
+    } else if (req.query.category) {
+      teams = await Team.find({ category });
     } else {
       teams = await Team.find();
     }
@@ -105,6 +167,35 @@ export const updateTeam = asyncHandler(async (req: Request, res: Response) => {
 
     if (teamUsername && teamUsername.trim().length > 0)
       updateTeamBody.teamUsername = teamUsername.trim();
+
+    if (req.file) {
+      //resize image
+      const buffer = await sharp(req.file.buffer)
+        .resize({ height: 400, width: 400, fit: "contain" })
+        .toBuffer();
+      const params = {
+        Bucket: bucketName,
+        Key: randomImageName(),
+        Body: buffer,
+        ContentType: req.file.mimetype,
+      };
+
+      const command = new PutObjectCommand(params);
+
+      await s3.send(command);
+
+      const updatedTeam = await Team.findByIdAndUpdate(
+        team._id,
+        {
+          displayImage: randomImageName(),
+        },
+        {
+          new: true,
+        }
+      );
+      res.status(200).json({ message: "successful", data: updatedTeam });
+      return;
+    }
 
     if (!name && !category && !audience && !teamUsername) {
       res.status(400);
