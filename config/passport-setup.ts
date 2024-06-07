@@ -43,7 +43,11 @@ passport.use(
       if (!userAvailable) {
         await User.create({
           email,
+          username: profile.displayName.replace(/\s/g, ""),
+          isVerified: true,
         });
+      } else {
+        console.log("USER EXISTS");
       }
 
       done(null, profile);

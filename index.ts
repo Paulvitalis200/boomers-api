@@ -26,15 +26,15 @@ var session = require("express-session");
 const port = process.env.PORT || 5001;
 
 app.use(express.json());
-// //Setting up cookies
-// app.use(
-//   cookieSession({
-//     name: "tuto-session",
-//     keys: ["key1", "key2"],
-//   })
-// );
 
-app.set("trust proxy", 1); // trust first proxy
+// //Setting up cookies
+app.use(
+  cookieSession({
+    name: "tuto-session",
+    keys: ["key1", "key2"],
+  })
+);
+
 app.use(
   session({
     secret: "keyboard cat",
@@ -47,7 +47,6 @@ app.use(
 app.use(passport.initialize());
 //Setting Up Session
 app.use(passport.session());
-app.use(userRouter);
 app.use("/api/users", [userRouter, userProfileRouter]);
 app.use("/api/teams", [teamRouter, teamChallengeRouter]);
 app.use("/api/team-member", teamMemberRouter);
