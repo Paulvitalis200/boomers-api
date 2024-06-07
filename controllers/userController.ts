@@ -146,37 +146,21 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
 //access public
 export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
   try {
-    const { email, phoneNumber, verificationCode } = req.body;
+    const { verificationCode, accountId } = req.body;
 
-    if (!email && !phoneNumber) {
-      res.status(400);
-      throw new Error("Please put an email or phone number");
+    if (!accountId) {
+      res.status(400).json({ message: "Please put email or phoneNumber" });
+      return;
     }
+    const hashedVerificationCode = await UserVerificationCode.find({
+      $or: [{ phoneNumber: accountId.trim() }, { email: accountId.trim() }],
+    });
 
-    if (email && phoneNumber) {
-      res.status(400);
-      throw new Error("Please select either email or phone number");
-    }
+    const user = await User.find({
+      $or: [{ phoneNumber: accountId.trim() }, { email: accountId.trim() }],
+    });
 
-    let hashedVerificationCode;
-    let user;
-    if (email) {
-      hashedVerificationCode = await UserVerificationCode.findOne({
-        email: { $in: [email] },
-      });
-      user = await User.findOne({
-        email,
-      });
-    } else {
-      hashedVerificationCode = await UserVerificationCode.findOne({
-        phoneNumber: { $in: [phoneNumber] },
-      });
-      user = await User.findOne({
-        phoneNumber,
-      });
-    }
-
-    if (!hashedVerificationCode) {
+    if (!hashedVerificationCode.length) {
       if (!user) {
         res.status(404).json({ error: "User does not exist." });
         return;
@@ -188,47 +172,49 @@ export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
 
     const isCorrect = await bcrypt.compare(
       verificationCode.toString(),
-      hashedVerificationCode.code
+      hashedVerificationCode[0].code
     );
 
-    const createdDate: any = hashedVerificationCode._id.getTimestamp();
+    const createdDate: any = hashedVerificationCode[0]._id.getTimestamp();
     const currentDate: any = new Date();
     const diffTime = Math.abs(createdDate - currentDate);
     const twentyFourHours = 1000 * 60 * 60 * 24;
 
     if (diffTime > twentyFourHours) {
-      await UserVerificationCode.findByIdAndDelete(hashedVerificationCode._id);
+      await UserVerificationCode.findByIdAndDelete(
+        hashedVerificationCode[0]._id
+      );
       res.status(400).json({ error: "User code expired" });
       return;
     } else {
       if (isCorrect) {
-        const updateUser = await User.findByIdAndUpdate(user?._id, {
+        const updateUser = await User.findByIdAndUpdate(user[0]._id, {
           isVerified: true,
         });
 
         const isVerified = await UserVerificationCode.findByIdAndDelete(
-          hashedVerificationCode._id
+          hashedVerificationCode[0]._id
         );
 
         if (isVerified) {
-          if (email) {
+          if (user[0].email) {
             const emailTemplate = `<div>
-            <p>Hi,</p>
+            <p>Hi ${user[0].username},</p>
             <p>Your email has been verified successfully!</p>
             <p>Best,</p>
             <p>Boomers Support</p>
           </div>`;
-            sendMail(transporter, email, emailTemplate);
+            sendMail(transporter, user[0].email, emailTemplate);
           }
           const userProfile = await UserProfile.create({
-            email,
-            phoneNumber,
-            user_id: user?.id,
-            username: user?.username,
+            email: user[0].email,
+            phoneNumber: user[0].phoneNumber,
+            user_id: user[0]._id,
+            username: user[0].username,
           });
 
           if (userProfile) {
-            await User.findByIdAndUpdate(user?._id, {
+            await User.findByIdAndUpdate(user[0]._id, {
               profile: userProfile._id,
             });
           }
@@ -239,6 +225,7 @@ export const verifyUser = asyncHandler(async (req: Request, res: Response) => {
       }
     }
   } catch (error: any) {
+    console.log(error);
     res.status(400).json({ error: error });
   }
 });

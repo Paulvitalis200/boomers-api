@@ -12,35 +12,32 @@ dotenv.config();
 //access public
 const logInUser = asyncHandler(async (req: Request, res: Response) => {
   try {
-    const { email, password, phoneNumber } = req.body;
+    const { password, accountId } = req.body;
 
-    if (!email && !phoneNumber) {
-      res.status(400);
-      throw new Error("Please put an email or phone number");
-    }
     if (!password.trim()) {
       res.status(400);
       throw new Error("Please put a password");
     }
 
-    if (email && phoneNumber) {
-      res.status(400);
-      throw new Error("Please select either email or phone number");
-    }
+    const user = await User.find({
+      $or: [
+        { phoneNumber: accountId.trim() },
+        { username: accountId.trim() },
+        { email: accountId.trim() },
+      ],
+    });
 
-    let user;
-    if (email) {
-      user = await User.findOne({ email });
-    } else {
-      user = await User.findOne({ phoneNumber });
-    }
-
-    if (!user || !user.isVerified) {
+    if (!user.length) {
       res.status(401);
       throw new Error("Invalid email/phone or password");
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!user[0].isVerified) {
+      res.status(401);
+      throw new Error("Invalid email/phone or password");
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user[0].password);
 
     if (!isPasswordValid) {
       res.status(401);
@@ -48,7 +45,7 @@ const logInUser = asyncHandler(async (req: Request, res: Response) => {
     }
 
     const existingAuthCode = await UserLoginCode.findOne({
-      userId: user._id,
+      userId: user[0]._id,
     });
 
     if (existingAuthCode) {
@@ -63,7 +60,7 @@ const logInUser = asyncHandler(async (req: Request, res: Response) => {
 
     // Store the hashed authentication code in the database
     await UserLoginCode.create({
-      userId: user._id,
+      userId: user[0]._id,
       logInCode: hashedAuthCode,
     });
 
@@ -79,30 +76,30 @@ const logInUser = asyncHandler(async (req: Request, res: Response) => {
 export const verifyUserCode = asyncHandler(
   async (req: Request, res: Response) => {
     try {
-      const { email, authCode, phoneNumber } = req.body;
+      const { authCode, accountId } = req.body;
 
-      if ((!email && !authCode) || (!phoneNumber && !authCode)) {
+      if (!accountId && !authCode) {
         res.status(400).json({
-          message:
-            "Please provide both email/phone number and verification code",
+          message: "Please provide both accountId and verification code",
         });
         return;
       }
 
-      let user;
-      if (email) {
-        user = await User.findOne({ email });
-      } else {
-        user = await User.findOne({ phoneNumber });
-      }
+      const user = await User.find({
+        $or: [
+          { phoneNumber: accountId.trim() },
+          { username: accountId.trim() },
+          { email: accountId.trim() },
+        ],
+      });
 
-      if (!user) {
-        res.status(401).json({ message: "User not found" });
-        return;
+      if (!user.length) {
+        res.status(404);
+        throw new Error("User not found");
       }
 
       const logInAuthCode = await UserLoginCode.findOne({
-        userId: user._id,
+        userId: user[0]._id,
       });
 
       if (!logInAuthCode) {
@@ -133,14 +130,15 @@ export const verifyUserCode = asyncHandler(
       }
 
       // Delete the authentication code from the database
-      await UserLoginCode.deleteOne({ userId: user._id });
+      await UserLoginCode.deleteOne({ userId: user[0]._id });
 
       // Create a JWT token with an expiration time of 1 hour
       const token = jwt.sign(
         {
           user: {
-            email: user.email,
-            id: user._id,
+            phoneNumber: user[0].phoneNumber,
+            email: user[0].email,
+            id: user[0]._id,
           },
         },
         process.env.ACCESS_TOKEN_SECRET!,
@@ -151,7 +149,7 @@ export const verifyUserCode = asyncHandler(
 
       res.status(200).json({ message: "Code verified successfully", token });
     } catch (error: any) {
-      res.status(400).json({ error: error });
+      throw new Error(error);
     }
   }
 );
