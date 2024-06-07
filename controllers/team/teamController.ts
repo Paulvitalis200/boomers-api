@@ -105,8 +105,14 @@ export const createTeam = asyncHandler(
 export const getAllTeams = asyncHandler(async (req: Request, res: Response) => {
   try {
     let teams: any = [];
+    let { category, name } = req.query;
+
     if (req.query.userId) {
       teams = await Team.find({ owner_id: req.query.userId });
+    } else if (req.query.name) {
+      teams = await Team.find({ name });
+    } else if (req.query.category) {
+      teams = await Team.find({ category });
     } else {
       teams = await Team.find();
     }
