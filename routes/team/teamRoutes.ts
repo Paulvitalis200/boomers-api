@@ -7,6 +7,14 @@ import {
   updateTeam,
 } from "../../controllers/team/teamController";
 import validateToken from "../../middleware/validateTokenHandler";
+import dotenv from "dotenv";
+import multer from "multer";
+
+dotenv.config();
+
+// This will enable just storing the image in memory
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 const teamRouter = express.Router();
 
@@ -55,7 +63,7 @@ teamRouter.use(validateToken);
  *      500:
  *        description: Server Error
  */
-teamRouter.post("/", createTeam);
+teamRouter.post("/", upload.single("image"), createTeam);
 
 /**
  * @openapi
@@ -118,7 +126,7 @@ teamRouter.get("/", getAllTeams);
  *      500:
  *        description: Server Error
  */
-teamRouter.put("/:id", updateTeam);
+teamRouter.put("/:id", updateTeam, upload.single("image"));
 
 /**
  * @openapi

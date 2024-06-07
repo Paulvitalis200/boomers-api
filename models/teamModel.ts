@@ -7,6 +7,8 @@ interface ITeam {
   isActive: boolean;
   audience: any;
   teamUsername: string;
+  displayImage: string;
+  backgroundImage: string;
 }
 
 const teamSchema = new Schema<ITeam>(
@@ -35,6 +37,12 @@ const teamSchema = new Schema<ITeam>(
       type: String,
       required: true,
       unique: true,
+    },
+    displayImage: {
+      type: String,
+    },
+    backgroundImage: {
+      type: String,
     },
   },
   {
