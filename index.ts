@@ -26,14 +26,13 @@ var session = require("express-session");
 const port = process.env.PORT || 5001;
 
 app.use(express.json());
-
 // //Setting up cookies
-app.use(
-  cookieSession({
-    name: "tuto-session",
-    keys: ["key1", "key2"],
-  })
-);
+// app.use(
+//   cookieSession({
+//     name: "tuto-session",
+//     keys: ["key1", "key2"],
+//   })
+// );
 
 app.use(
   session({

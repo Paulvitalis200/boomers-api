@@ -1,4 +1,5 @@
 import User from "../models/userModel";
+import UserProfile from "../models/userProfileModel";
 
 const passport = require("passport");
 
@@ -41,10 +42,17 @@ passport.use(
         email,
       });
       if (!userAvailable) {
-        await User.create({
+        const user = await User.create({
           email,
           username: profile.displayName.replace(/\s/g, ""),
           isVerified: true,
+        });
+
+        await UserProfile.create({
+          email,
+          user_id: user?.id,
+          username: profile.displayName.replace(/\s/g, ""),
+          profile_picture: profile.picture,
         });
       } else {
         console.log("USER EXISTS");
