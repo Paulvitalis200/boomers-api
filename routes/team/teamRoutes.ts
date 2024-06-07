@@ -126,7 +126,7 @@ teamRouter.get("/", getAllTeams);
  *      500:
  *        description: Server Error
  */
-teamRouter.put("/:id", updateTeam, upload.single("image"));
+teamRouter.put("/:id", upload.single("image"), updateTeam);
 
 /**
  * @openapi

@@ -162,6 +162,35 @@ export const updateTeam = asyncHandler(async (req: Request, res: Response) => {
     if (teamUsername && teamUsername.trim().length > 0)
       updateTeamBody.teamUsername = teamUsername.trim();
 
+    if (req.file) {
+      //resize image
+      const buffer = await sharp(req.file.buffer)
+        .resize({ height: 400, width: 400, fit: "contain" })
+        .toBuffer();
+      const params = {
+        Bucket: bucketName,
+        Key: randomImageName(),
+        Body: buffer,
+        ContentType: req.file.mimetype,
+      };
+
+      const command = new PutObjectCommand(params);
+
+      await s3.send(command);
+
+      const updatedTeam = await Team.findByIdAndUpdate(
+        team._id,
+        {
+          displayImage: randomImageName(),
+        },
+        {
+          new: true,
+        }
+      );
+      res.status(200).json({ message: "successful", data: updatedTeam });
+      return;
+    }
+
     if (!name && !category && !audience && !teamUsername) {
       res.status(400);
       throw new Error("Please put a valid value");
