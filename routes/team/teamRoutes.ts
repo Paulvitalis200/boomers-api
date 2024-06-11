@@ -1,5 +1,8 @@
 import express from "express";
 import {
+  addDomain,
+  addDomainTopic,
+  addSubDomain,
   createTeam,
   deleteTeam,
   getAllTeams,
@@ -165,5 +168,140 @@ teamRouter.delete("/:id", deleteTeam);
  *        description: Server Error
  */
 teamRouter.get("/:id", getTeam);
+
+/**
+ * @openapi
+ * '/api/teams/domains':
+ *  post:
+ *     tags:
+ *     - Team Controller
+ *     summary: Add team domain
+ *     requestBody:
+ *      required: true
+ *      content:
+ *        application/json:
+ *           schema:
+ *            type: object
+ *            required:
+ *              - name
+ *              - audience
+ *              - category
+ *              - teamUserName
+ *            properties:
+ *              name:
+ *                type: string
+ *                default: thefunky Bunch
+ *              audience:
+ *                type: array
+ *                default: ['Developers', 'Farmers']
+ *              category:
+ *                type: array
+ *                default: ['Software']
+ *              teamUserName:
+ *                type: string
+ *                default: thefunkyBunch
+ *     responses:
+ *      201:
+ *        description: Created
+ *      400:
+ *        description: Bad Request
+ *      409:
+ *        description: Conflict
+ *      404:
+ *        description: Not Found
+ *      500:
+ *        description: Server Error
+ */
+teamRouter.post("/domains", addDomain);
+
+/**
+ * @openapi
+ * '/api/teams/domains/:id/subdomain':
+ *  post:
+ *     tags:
+ *     - Team Controller
+ *     summary: Add team subdomain
+ *     requestBody:
+ *      required: true
+ *      content:
+ *        application/json:
+ *           schema:
+ *            type: object
+ *            required:
+ *              - name
+ *              - audience
+ *              - category
+ *              - teamUserName
+ *            properties:
+ *              name:
+ *                type: string
+ *                default: thefunky Bunch
+ *              audience:
+ *                type: array
+ *                default: ['Developers', 'Farmers']
+ *              category:
+ *                type: array
+ *                default: ['Software']
+ *              teamUserName:
+ *                type: string
+ *                default: thefunkyBunch
+ *     responses:
+ *      201:
+ *        description: Created
+ *      400:
+ *        description: Bad Request
+ *      409:
+ *        description: Conflict
+ *      404:
+ *        description: Not Found
+ *      500:
+ *        description: Server Error
+ */
+teamRouter.post("/domains/:id/subdomain", addSubDomain);
+
+/**
+ * @openapi
+ * '/api/teams/domains/topics':
+ *  post:
+ *     tags:
+ *     - Team Controller
+ *     summary: Add domain topic
+ *     requestBody:
+ *      required: true
+ *      content:
+ *        application/json:
+ *           schema:
+ *            type: object
+ *            required:
+ *              - name
+ *              - audience
+ *              - category
+ *              - teamUserName
+ *            properties:
+ *              name:
+ *                type: string
+ *                default: thefunky Bunch
+ *              audience:
+ *                type: array
+ *                default: ['Developers', 'Farmers']
+ *              category:
+ *                type: array
+ *                default: ['Software']
+ *              teamUserName:
+ *                type: string
+ *                default: thefunkyBunch
+ *     responses:
+ *      201:
+ *        description: Created
+ *      400:
+ *        description: Bad Request
+ *      409:
+ *        description: Conflict
+ *      404:
+ *        description: Not Found
+ *      500:
+ *        description: Server Error
+ */
+teamRouter.post("/domains/topics", addDomainTopic);
 
 export default teamRouter;
