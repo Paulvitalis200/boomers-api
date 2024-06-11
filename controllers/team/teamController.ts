@@ -11,6 +11,9 @@ import {
 import crypto from "crypto";
 import sharp from "sharp";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import TeamDomain from "../../models/teamDomainModel";
+import TeamSubDomain from "../../models/teamSubdomainModel";
+import DomainTopic from "../../models/domainTopicModel";
 
 const randomImageName = (bytes = 32) =>
   crypto.randomBytes(bytes).toString("hex");
@@ -33,10 +36,11 @@ const s3 = new S3Client({
 export const createTeam = asyncHandler(
   async (req: CustomRequest, res: Response) => {
     try {
-      const { name, category, audience, teamUsername } = req.body;
-      if (!name.trim() && !category) {
+      const { name, teamUsername, domain, subDomain, subDomainTopics } =
+        req.body;
+      if (!name.trim() || !domain.trim()) {
         res.status(400);
-        throw new Error("Please put name and category");
+        throw new Error("Please put name and domain");
       }
 
       const teamExists = await Team.findOne({ teamUsername });
@@ -44,6 +48,39 @@ export const createTeam = asyncHandler(
       if (teamExists) {
         res.status(409);
         throw new Error("Team already exists");
+      }
+
+      const domainExists = await TeamDomain.findOne({ name: domain });
+
+      if (!domainExists) {
+        res.status(409).json({ error: "Domain doesn't exist" });
+        return;
+      }
+
+      const subDomainExists: any = await TeamSubDomain.findOne({
+        name: subDomain,
+      });
+
+      if (subDomainExists?.parentDomain !== domainExists._id) {
+        res.status(409).json({ error: "Sub Domain does not belong to domain" });
+        return;
+      }
+
+      const domainTopics = await DomainTopic.find({});
+      const missingTopics: any = [];
+      subDomainTopics.map((topic: any) => {
+        const foundTopic = domainTopics.some((el) => el.name === topic);
+        if (!foundTopic) {
+          missingTopics.push(topic);
+        }
+      });
+
+      if (missingTopics.length > 0) {
+        res.status(404).json({
+          error: "The following topics are not created",
+          data: missingTopics,
+        });
+        return;
       }
 
       if (req.file) {
@@ -64,10 +101,11 @@ export const createTeam = asyncHandler(
 
         const team = await Team.create({
           name,
-          category,
-          audience,
           teamUsername,
           owner_id: req.user.id,
+          domain,
+          subDomain,
+          subDomainTopics,
           displayImage: randomImageName(),
         });
 
@@ -81,9 +119,10 @@ export const createTeam = asyncHandler(
       }
       const team = await Team.create({
         name,
-        category,
-        audience,
         teamUsername,
+        domain,
+        subDomain,
+        subDomainTopics,
         owner_id: req.user.id,
       });
 
@@ -151,19 +190,13 @@ export const updateTeam = asyncHandler(async (req: Request, res: Response) => {
       throw new Error("Team not found");
     }
 
-    const { name, category, audience, teamUsername } = req.body;
+    const { name, teamUsername } = req.body;
     let updateTeamBody = {
       name: team.name,
-      category: team.category,
-      audience: team.audience,
       teamUsername: team.teamUsername,
     };
 
     if (name && name.trim().length > 0) updateTeamBody.name = name.trim();
-
-    if (category && category.length > 0) updateTeamBody.category = category;
-
-    if (audience && audience.length > 0) updateTeamBody.audience = audience;
 
     if (teamUsername && teamUsername.trim().length > 0)
       updateTeamBody.teamUsername = teamUsername.trim();
@@ -197,7 +230,7 @@ export const updateTeam = asyncHandler(async (req: Request, res: Response) => {
       return;
     }
 
-    if (!name && !category && !audience && !teamUsername) {
+    if (!name && !teamUsername) {
       res.status(400);
       throw new Error("Please put a valid value");
     }
@@ -206,8 +239,6 @@ export const updateTeam = asyncHandler(async (req: Request, res: Response) => {
       team._id,
       {
         name: updateTeamBody.name,
-        category: updateTeamBody.category,
-        audience: updateTeamBody.audience,
         teamUsername: updateTeamBody.teamUsername,
       },
       {
@@ -240,3 +271,90 @@ export const deleteTeam = asyncHandler(async (req: Request, res: Response) => {
     res.status(200).json(team);
   } catch (error) {}
 });
+
+//@desc Post Domain
+//@route POST /api/teams/domains
+//access private
+export const addDomain = asyncHandler(async (req: Request, res: Response) => {
+  try {
+    const { name } = req.body;
+
+    if (!name.trim()) {
+      res.status(400);
+      throw new Error("No name inputed");
+    }
+
+    const commonName = name.trim().replace(/ /g, "_").toLowerCase();
+
+    const domain = await TeamDomain.create({ name, commonName });
+    res.status(201).json(domain);
+  } catch (error: any) {
+    console.log(error);
+    res.status(400).json({ error: error });
+  }
+});
+
+//@desc Post Subdomain
+//@route POST /api/teams/domains/:id/subdomain
+//access private
+export const addSubDomain = asyncHandler(
+  async (req: Request, res: Response) => {
+    try {
+      const { name } = req.body;
+
+      const teamDomain = await TeamDomain.findOne({ _id: req.params.id });
+      if (!name.trim()) {
+        res.status(400);
+        throw new Error("No name inputed");
+      }
+
+      if (!teamDomain) {
+        res.status(404).json({ error: "Not found" });
+        return;
+      }
+
+      const teamSubDomain = await TeamSubDomain.findOne({ name: name });
+
+      if (teamSubDomain) {
+        res.status(409).json({ error: "Sub Domain exists" });
+        return;
+      }
+
+      const commonName = name.trim().replace(/ /g, "_").toLowerCase();
+
+      const domain = await TeamSubDomain.create({
+        name,
+        parentDomain: req.params.id,
+        commonName,
+      });
+      res.status(201).json(domain);
+    } catch (error: any) {
+      console.log(error);
+      res.status(400).json({ error: error });
+    }
+  }
+);
+
+//@desc Post Domain Topic
+//@route POST /api/teams/domains/topics
+//access private
+export const addDomainTopic = asyncHandler(
+  async (req: Request, res: Response) => {
+    try {
+      const { name } = req.body;
+
+      if (!name.trim()) {
+        res.status(400);
+        throw new Error("No name inputed");
+      }
+
+      const domainTopic = await DomainTopic.create({
+        name,
+      });
+      res.status(201).json(domainTopic);
+    } catch (error: any) {
+      console.log(error);
+      res.status(400).json({ error: error });
+    }
+  }
+);

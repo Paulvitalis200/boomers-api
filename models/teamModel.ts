@@ -1,11 +1,12 @@
-import mongoose, { Schema, model } from "mongoose";
+import { Schema, model } from "mongoose";
 
 interface ITeam {
-  owner_id: any;
+  owner_id: Schema.Types.ObjectId;
   name: string;
-  category: any;
   isActive: boolean;
-  audience: any;
+  domain: Schema.Types.ObjectId;
+  subdomain: Schema.Types.ObjectId;
+  subdomainTopics: any;
   teamUsername: string;
   displayImage: string;
   backgroundImage: string;
@@ -14,7 +15,7 @@ interface ITeam {
 const teamSchema = new Schema<ITeam>(
   {
     owner_id: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       required: true,
       ref: "User",
     },
@@ -22,16 +23,8 @@ const teamSchema = new Schema<ITeam>(
       type: String,
       required: false,
     },
-    category: {
-      type: Array,
-      required: true,
-    },
     isActive: {
       type: Boolean,
-    },
-    audience: {
-      type: Array,
-      required: true,
     },
     teamUsername: {
       type: String,
@@ -43,6 +36,16 @@ const teamSchema = new Schema<ITeam>(
     },
     backgroundImage: {
       type: String,
+    },
+    domain: {
+      type: Schema.Types.ObjectId,
+      required: true,
+    },
+    subdomain: {
+      type: Schema.Types.ObjectId,
+    },
+    subdomainTopics: {
+      type: Array,
     },
   },
   {
