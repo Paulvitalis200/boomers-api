@@ -14,6 +14,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import TeamDomain from "../../models/teamDomainModel";
 import TeamSubDomain from "../../models/teamSubdomainModel";
 import DomainTopic from "../../models/domainTopicModel";
+import UserProfile from "../../models/userProfileModel";
 
 const randomImageName = (bytes = 32) =>
   crypto.randomBytes(bytes).toString("hex");
@@ -352,6 +353,40 @@ export const addDomainTopic = asyncHandler(
       res.status(201).json(domainTopic);
     } catch (error: any) {
       console.log(error);
+      res.status(400).json({ error: error });
+    }
+  }
+);
+
+//@desc Get Team recommendations
+//@route GET /api/teams/recommendations
+//access private
+export const getTeamRecommendations = asyncHandler(
+  async (req: CustomRequest, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const userProfile = await UserProfile.findOne({ user_id: userId });
+
+      console.log("THIS: ", userProfile);
+
+      if (userProfile?.interests) {
+        if (userProfile.interests.subDomains) {
+          const teams = await Team.find({
+            subDomain: { $all: userProfile.interests.subDomains },
+          });
+        }
+      }
+      // if (!name.trim()) {
+      //   res.status(400);
+      //   throw new Error("No name inputed");
+      // }
+
+      // const domainTopic = await DomainTopic.create({
+      //   name,
+      // });
+      // res.status(201).json(domainTopic);
+    } catch (error: any) {
+      console.log("THIS: ", error);
       res.status(400).json({ error: error });
     }
   }
