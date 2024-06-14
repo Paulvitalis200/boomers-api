@@ -427,12 +427,12 @@ export const getTeamRecommendations = asyncHandler(
   async (req: CustomRequest, res: Response) => {
     try {
       const userId = req.user.id;
-      const userProfile = await UserProfile.findOne({ user_id: userId });
+      const userProfile: any = await UserProfile.findOne({ user_id: userId });
 
       let teams: any = [];
-      if (userProfile?.interests) {
-        if (userProfile.interests.subDomains.length > 0) {
-          if (userProfile.interests.subTopics.length > 0) {
+      if (Object.keys(userProfile.interests).length > 0) {
+        if (userProfile.interests.subDomains?.length > 0) {
+          if (userProfile.interests.subTopics?.length > 0) {
             teams = await Team.find({
               subdomainTopics: { $in: userProfile.interests.subTopics },
             });
@@ -446,6 +446,8 @@ export const getTeamRecommendations = asyncHandler(
             domain: { $in: userProfile.interests.domains },
           });
         }
+      } else {
+        teams = await Team.find();
       }
       res.status(200).json({ data: teams });
     } catch (error: any) {
