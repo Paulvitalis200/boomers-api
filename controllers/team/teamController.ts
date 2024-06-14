@@ -106,9 +106,9 @@ export const createTeam = asyncHandler(
           name,
           teamUsername,
           owner_id: req.user.id,
-          domain: domainExists,
-          subDomain,
-          subDomainTopics,
+          domain: domainExists.name,
+          subdomain: subDomain,
+          subdomainTopics: subDomainTopics,
           displayImage: randomImageName(),
         });
 
@@ -121,12 +121,14 @@ export const createTeam = asyncHandler(
         return;
       }
 
+      console.log("SUB: ", subDomainTopics);
+
       const team = await Team.create({
         name,
         teamUsername,
-        domain: domainExists,
-        subDomain,
-        subDomainTopics,
+        domain: domainExists.name,
+        subdomain: subDomain,
+        subdomainTopics: subDomainTopics,
         owner_id: req.user.id,
       });
 
@@ -427,42 +429,26 @@ export const getTeamRecommendations = asyncHandler(
       const userId = req.user.id;
       const userProfile = await UserProfile.findOne({ user_id: userId });
 
-      console.log("THIS: ", userProfile);
-
       let teams: any = [];
       if (userProfile?.interests) {
-        console.log("NDANI");
         if (userProfile.interests.subDomains.length > 0) {
-          console.log("WITHIN");
           if (userProfile.interests.subTopics.length > 0) {
-            console.log("WITHIN WITHIN");
-            console.log("QUERY: ", userProfile.interests.subTopics);
             teams = await Team.find({
-              subdomainTopics: { $all: userProfile.interests.subTopics },
+              subdomainTopics: { $in: userProfile.interests.subTopics },
             });
           } else {
             teams = await Team.find({
-              subdomain: { $all: userProfile.interests.subDomains },
+              subdomain: { $in: userProfile.interests.subDomains },
             });
           }
         } else {
           teams = await Team.find({
-            domain: { $all: userProfile.interests.domains },
+            domain: { $in: userProfile.interests.domains },
           });
         }
       }
-      console.log("TEAMS: ", teams);
-      // if (!name.trim()) {
-      //   res.status(400);
-      //   throw new Error("No name inputed");
-      // }
-
-      // const domainTopic = await DomainTopic.create({
-      //   name,
-      // });
-      // res.status(201).json(domainTopic);
+      res.status(200).json({ data: teams });
     } catch (error: any) {
-      console.log("THIS: ", error);
       res.status(400).json({ error: error });
     }
   }
