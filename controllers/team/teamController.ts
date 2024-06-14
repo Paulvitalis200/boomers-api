@@ -14,6 +14,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import TeamDomain from "../../models/teamDomainModel";
 import TeamSubDomain from "../../models/teamSubdomainModel";
 import DomainTopic from "../../models/domainTopicModel";
+import UserProfile from "../../models/userProfileModel";
 
 const randomImageName = (bytes = 32) =>
   crypto.randomBytes(bytes).toString("hex");
@@ -105,9 +106,9 @@ export const createTeam = asyncHandler(
           name,
           teamUsername,
           owner_id: req.user.id,
-          domain: domainExists,
-          subDomain,
-          subDomainTopics,
+          domain: domainExists.name,
+          subdomain: subDomain,
+          subdomainTopics: subDomainTopics,
           displayImage: randomImageName(),
         });
 
@@ -120,12 +121,14 @@ export const createTeam = asyncHandler(
         return;
       }
 
+      console.log("SUB: ", subDomainTopics);
+
       const team = await Team.create({
         name,
         teamUsername,
-        domain: domainExists,
-        subDomain,
-        subDomainTopics,
+        domain: domainExists.name,
+        subdomain: subDomain,
+        subdomainTopics: subDomainTopics,
         owner_id: req.user.id,
       });
 
@@ -412,6 +415,42 @@ export const addDomainTopic = asyncHandler(
       res.status(201).json(domainTopic);
     } catch (error: any) {
       console.log(error);
+      res.status(400).json({ error: error });
+    }
+  }
+);
+
+//@desc Get Team recommendations
+//@route GET /api/teams/recommendations
+//access private
+export const getTeamRecommendations = asyncHandler(
+  async (req: CustomRequest, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const userProfile: any = await UserProfile.findOne({ user_id: userId });
+
+      let teams: any = [];
+      if (Object.keys(userProfile.interests).length > 0) {
+        if (userProfile.interests.subDomains?.length > 0) {
+          if (userProfile.interests.subTopics?.length > 0) {
+            teams = await Team.find({
+              subdomainTopics: { $in: userProfile.interests.subTopics },
+            });
+          } else {
+            teams = await Team.find({
+              subdomain: { $in: userProfile.interests.subDomains },
+            });
+          }
+        } else {
+          teams = await Team.find({
+            domain: { $in: userProfile.interests.domains },
+          });
+        }
+      } else {
+        teams = await Team.find();
+      }
+      res.status(200).json({ data: teams });
+    } catch (error: any) {
       res.status(400).json({ error: error });
     }
   }
