@@ -429,13 +429,29 @@ export const getTeamRecommendations = asyncHandler(
 
       console.log("THIS: ", userProfile);
 
+      let teams: any = [];
       if (userProfile?.interests) {
-        if (userProfile.interests.subDomains) {
-          const teams = await Team.find({
-            subDomain: { $all: userProfile.interests.subDomains },
+        console.log("NDANI");
+        if (userProfile.interests.subDomains.length > 0) {
+          console.log("WITHIN");
+          if (userProfile.interests.subTopics.length > 0) {
+            console.log("WITHIN WITHIN");
+            console.log("QUERY: ", userProfile.interests.subTopics);
+            teams = await Team.find({
+              subdomainTopics: { $all: userProfile.interests.subTopics },
+            });
+          } else {
+            teams = await Team.find({
+              subdomain: { $all: userProfile.interests.subDomains },
+            });
+          }
+        } else {
+          teams = await Team.find({
+            domain: { $all: userProfile.interests.domains },
           });
         }
       }
+      console.log("TEAMS: ", teams);
       // if (!name.trim()) {
       //   res.status(400);
       //   throw new Error("No name inputed");
