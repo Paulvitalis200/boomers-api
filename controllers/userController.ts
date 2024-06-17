@@ -40,9 +40,16 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
       res.status(400);
       throw new Error("Please put a username");
     }
+
+    if (username.length < 3) {
+      res.status(400);
+      throw new Error("Username should be between 3 and 30 characters");
+    }
+
     let userAvailable = [];
     let validatedPhoneNumber;
-    if (email && username) {
+
+    if (email) {
       const isValid = EmailValidator.validate(email);
 
       if (!isValid) {
@@ -55,7 +62,7 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
       });
     }
 
-    if (phoneNumber && username) {
+    if (phoneNumber) {
       if (phoneNumber.length > 10 || phoneNumber.length < 9) {
         res.status(400).json({ message: "Invalid phone Number" });
         return;
@@ -76,11 +83,11 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
       userAvailable = await User.find({
         $or: [{ phoneNumber: validatedPhoneNumber }, { username: username }],
       });
+    }
 
-      if (userAvailable.length > 0) {
-        res.status(409).json({ message: "User exists" });
-        return;
-      }
+    if (userAvailable.length > 0) {
+      res.status(409).json({ message: "User exists" });
+      return;
     }
 
     const regexPattern =
@@ -95,11 +102,6 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
     }
 
     const hashPassword = await bcrypt.hash(password.trim(), 10);
-
-    if (userAvailable.length > 0) {
-      res.status(409);
-      throw new Error("User already registered!");
-    }
 
     const user = await User.create({
       password: hashPassword,
