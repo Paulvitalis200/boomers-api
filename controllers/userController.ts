@@ -347,7 +347,10 @@ export const getUsers = asyncHandler(async (req: Request, res: Response) => {
     const { username } = req.query;
     let users;
     if (username) {
-      users = await User.find({ username: { $regex: ".*" + username + ".*" } });
+      // users = await User.find({ username: { $regex: ".*" + username + ".*" } });
+      users = await User.find({
+        username: { $regex: username, $options: "i" },
+      });
     } else {
       users = await User.find({});
     }
