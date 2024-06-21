@@ -76,6 +76,7 @@ const logInUser = asyncHandler(async (req: Request, res: Response) => {
 export const verifyUserCode = asyncHandler(
   async (req: Request, res: Response) => {
     try {
+      console.log("try");
       const { authCode, accountId } = req.body;
 
       if (!accountId && !authCode) {
@@ -92,7 +93,7 @@ export const verifyUserCode = asyncHandler(
           { email: accountId.trim() },
         ],
       });
-
+      console.log(user);
       if (!user.length) {
         res.status(404);
         throw new Error("User not found");
